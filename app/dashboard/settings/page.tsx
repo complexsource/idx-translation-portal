@@ -144,7 +144,7 @@ export default function SettingsPage() {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-[50px] md:mt-[10px]">
       <h1 className="text-3xl font-bold">Settings</h1>
       
       <Tabs defaultValue="profile" className="space-y-6">

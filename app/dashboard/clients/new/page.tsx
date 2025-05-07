@@ -23,31 +23,32 @@ export default function NewClientPage() {
     translationType: 'basic',
     planType: 'unlimited',
     tokenLimit: '',
+    aiModel: 'gpt-4o-mini',
+    idxAiType: 'Prompt AI',
   });
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleTranslationTypeChange = (value: string) => {
     setFormData(prev => ({ ...prev, translationType: value }));
   };
 
   const handlePlanTypeChange = (value: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       planType: value,
-      tokenLimit: value === 'unlimited' ? '' : prev.tokenLimit 
+      tokenLimit: value === 'unlimited' ? '' : prev.tokenLimit
     }));
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      // Validate form
       if (!formData.name.trim() || !formData.email.trim() || !formData.domain.trim()) {
         toast({
           variant: 'destructive',
@@ -65,29 +66,23 @@ export default function NewClientPage() {
         });
         return;
       }
-      
-      // Submit to API
+
       const res = await fetch('/api/clients', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to create client');
       }
-      
-      const data = await res.json();
-      
+
       toast({
         title: 'Client Created',
         description: 'The client has been successfully created.',
       });
-      
-      // Redirect to client list
+
       router.push('/dashboard/clients');
     } catch (error: any) {
       console.error('Error creating client:', error);
@@ -100,7 +95,7 @@ export default function NewClientPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -112,7 +107,7 @@ export default function NewClientPage() {
         </Button>
         <h1 className="text-3xl font-bold">Add New Client</h1>
       </div>
-      
+
       <Card className="max-w-2xl mx-auto">
         <form onSubmit={handleSubmit}>
           <CardHeader>
@@ -121,7 +116,9 @@ export default function NewClientPage() {
               Create a new client for translation services. An API key will be automatically generated.
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-6">
+            {/* Basic Fields */}
             <div className="space-y-2">
               <Label htmlFor="name">Client Name</Label>
               <Input
@@ -132,9 +129,6 @@ export default function NewClientPage() {
                 onChange={handleChange}
                 required
               />
-              <p className="text-sm text-muted-foreground">
-                The name of the client or organization.
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -148,11 +142,8 @@ export default function NewClientPage() {
                 onChange={handleChange}
                 required
               />
-              <p className="text-sm text-muted-foreground">
-                The contact email for the client.
-              </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="domain">Domain</Label>
               <Input
@@ -163,15 +154,13 @@ export default function NewClientPage() {
                 onChange={handleChange}
                 required
               />
-              <p className="text-sm text-muted-foreground">
-                The domain name associated with this client.
-              </p>
             </div>
 
+            {/* Plan Type */}
             <div className="space-y-2">
               <Label>Plan Type</Label>
-              <Select 
-                value={formData.planType} 
+              <Select
+                value={formData.planType}
                 onValueChange={handlePlanTypeChange}
               >
                 <SelectTrigger>
@@ -197,49 +186,78 @@ export default function NewClientPage() {
                   min="1"
                   required
                 />
-                <p className="text-sm text-muted-foreground">
-                  Maximum number of tokens the client can use.
-                </p>
               </div>
             )}
-            
-            <div className="space-y-4">
-              <Label htmlFor="translationType">Translation Type</Label>
-              <RadioGroup
-                value={formData.translationType}
-                onValueChange={handleTranslationTypeChange}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+
+            {/* AI Model Selection */}
+            <div className="space-y-2">
+              <Label>Select AI Model</Label>
+              <Select
+                value={formData.aiModel}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, aiModel: value }))}
               >
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
-                  <RadioGroupItem value="basic" id="basic" className="mt-1" />
-                  <div className="space-y-1">
-                    <Label htmlFor="basic" className="font-medium cursor-pointer">Basic</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Standard translation capabilities.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
-                  <RadioGroupItem value="advanced" id="advanced" className="mt-1" />
-                  <div className="space-y-1">
-                    <Label htmlFor="advanced" className="font-medium cursor-pointer">Advanced</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enhanced translation with better context handling.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
-                  <RadioGroupItem value="expert" id="expert" className="mt-1" />
-                  <div className="space-y-1">
-                    <Label htmlFor="expert" className="font-medium cursor-pointer">Expert</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Premium translation with highest quality and customization.
-                    </p>
-                  </div>
-                </div>
-              </RadioGroup>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select AI model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
+                  <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* IDX AI Type */}
+            <div className="space-y-2">
+              <Label>Select IDX AI Type</Label>
+              <Select
+                value={formData.idxAiType}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, idxAiType: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select IDX AI Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Prompt AI">Prompt AI</SelectItem>
+                  <SelectItem value="Translate AI">Translate AI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Translation Type (conditional) */}
+            {formData.idxAiType === 'Translate AI' && (
+              <div className="space-y-4">
+                <Label htmlFor="translationType">Translation Type</Label>
+                <RadioGroup
+                  value={formData.translationType}
+                  onValueChange={handleTranslationTypeChange}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
+                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="basic" id="basic" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="basic" className="font-medium cursor-pointer">Basic</Label>
+                      <p className="text-sm text-muted-foreground">Standard translation capabilities.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="advanced" id="advanced" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="advanced" className="font-medium cursor-pointer">Advanced</Label>
+                      <p className="text-sm text-muted-foreground">Better context handling.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="expert" id="expert" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="expert" className="font-medium cursor-pointer">Expert</Label>
+                      <p className="text-sm text-muted-foreground">Highest quality and customization.</p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
           </CardContent>
+
           <CardFooter className="flex justify-between">
             <Button variant="outline" asChild>
               <Link href="/dashboard/clients">Cancel</Link>

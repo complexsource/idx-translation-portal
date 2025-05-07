@@ -8,6 +8,7 @@ export function middleware(request: NextRequest) {
     path === '/' ||
     path === '/login' ||
     path.startsWith('/api/translate') ||
+    path.startsWith('/api/prompt') ||
     path.startsWith('/api/auth') ||
     path === '/api/dev/reset-admin';
 

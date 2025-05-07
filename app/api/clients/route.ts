@@ -1,8 +1,8 @@
+// app/api/clients/route.ts
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import crypto from 'crypto';
 
-// Generate API key
 function generateApiKey() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -26,25 +26,25 @@ export async function GET(request: Request) {
 // CREATE new client
 export async function POST(request: Request) {
   try {
-    const { name, email, domain, translationType, planType, tokenLimit } = await request.json();
+    const {
+      name,
+      email,
+      domain,
+      planType,
+      tokenLimit,
+      aiModel,
+      idxAiType,
+      translationType
+    } = await request.json();
 
-    // Validate required fields
-    if (!name || !email || !domain || !translationType || !planType) {
+    // Required field checks
+    if (!name || !email || !domain || !planType || !aiModel || !idxAiType) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Validate translation type
-    if (!['basic', 'advanced', 'expert'].includes(translationType)) {
-      return NextResponse.json(
-        { error: 'Invalid translation type' },
-        { status: 400 }
-      );
-    }
-
-    // Validate plan type
     if (!['limited', 'unlimited'].includes(planType)) {
       return NextResponse.json(
         { error: 'Invalid plan type' },
@@ -52,7 +52,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate token limit for limited plan
     if (planType === 'limited' && (!tokenLimit || tokenLimit <= 0)) {
       return NextResponse.json(
         { error: 'Token limit is required for limited plan' },
@@ -60,9 +59,24 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!['Prompt AI', 'Translate AI'].includes(idxAiType)) {
+      return NextResponse.json(
+        { error: 'Invalid IDX AI Type' },
+        { status: 400 }
+      );
+    }
+
+    if (idxAiType === 'Translate AI') {
+      if (!translationType || !['basic', 'advanced', 'expert'].includes(translationType)) {
+        return NextResponse.json(
+          { error: 'Invalid or missing translation type for Translate AI' },
+          { status: 400 }
+        );
+      }
+    }
+
     const db = await getDb();
 
-    // Check if client with same name, email or domain exists
     const existingClient = await db.collection('clients').findOne({
       $or: [{ name }, { email }, { domain }]
     });
@@ -74,24 +88,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create client with generated API key
     const apiKey = generateApiKey();
-    const result = await db.collection('clients').insertOne({
+
+    const clientData = {
       name,
       email,
       domain,
-      translationType,
       planType,
       tokenLimit: planType === 'limited' ? tokenLimit : null,
+      aiModel,
+      idxAiType,
+      translationType: idxAiType === 'Translate AI' ? translationType : null,
       apiKey,
       createdAt: new Date(),
       updatedAt: new Date(),
       usage: {
         tokens: 0,
         cost: 0,
-        lastUsed: null
+        lastUsed: null,
       }
-    });
+    };
+
+    const result = await db.collection('clients').insertOne(clientData);
 
     return NextResponse.json(
       {

@@ -1,22 +1,21 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { CircleArrowRight } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="mx-auto container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl">
-            <CircleArrowRight className="h-6 w-6 text-primary" />
-            <span>IDX Translation Portal</span>
+            <Image src="/images/logo/idx-logo.png" alt="IDX Logo" width={100} height={24} className="w-[100px]" />
           </div>
           <nav className="flex items-center gap-6">
-            <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
+            {/* <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
               Login
-            </Link>
+            </Link> */}
             <Button asChild>
-              <Link href="/login">Get Started</Link>
+              <Link href="/login">Login</Link>
             </Button>
           </nav>
         </div>
@@ -24,7 +23,7 @@ export default function Home() {
       
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-          <div className="container px-4 md:px-6">
+          <div className="mx-auto container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
@@ -36,22 +35,17 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button size="lg" asChild>
+                  {/* <Button size="lg" asChild>
                     <Link href="/login">Get Started</Link>
-                  </Button>
+                  </Button> */}
                   <Button size="lg" variant="outline" asChild>
                     <Link href="/login">Login to Dashboard</Link>
                   </Button>
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <div className="relative h-[350px] w-full overflow-hidden rounded-xl bg-gradient-to-b from-indigo-500 to-purple-500 p-2">
-                  <div className="absolute inset-0 flex items-center justify-center text-white">
-                    <div className="space-y-2 text-center">
-                      <div className="text-7xl font-bold">IDX</div>
-                      <div className="text-xl">Translation Portal</div>
-                    </div>
-                  </div>
+                <div className="relative h-[350px] w-full overflow-hidden rounded-xl p-2">
+                  <div className="absolute inset-0 flex items-center justify-center text-white bg-cover bg-center" style={{ backgroundImage: "url('/images/portal/tranlate-ai-image.jpeg')" }}></div>
                 </div>
               </div>
             </div>
@@ -59,7 +53,7 @@ export default function Home() {
         </section>
         
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6">
+          <div className="mx-auto container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Key Features</h2>
@@ -213,21 +207,12 @@ export default function Home() {
       </main>
       
       <footer className="w-full border-t py-6">
-        <div className="container px-4 md:px-6">
+        <div className="mx-auto container px-4 md:px-6">
           <div className="flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
             <div className="flex items-center gap-2">
-              <CircleArrowRight className="h-6 w-6" />
               <p className="text-center text-sm leading-loose md:text-left">
-                © 2025 IDX Translation Portal. All rights reserved.
+                © 2025 IDX Translation AI Portal
               </p>
-            </div>
-            <div className="flex gap-4">
-              <a href="#" className="text-sm underline underline-offset-4">
-                Terms
-              </a>
-              <a href="#" className="text-sm underline underline-offset-4">
-                Privacy
-              </a>
             </div>
           </div>
         </div>

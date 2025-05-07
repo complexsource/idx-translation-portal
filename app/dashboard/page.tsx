@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { BarChart, DollarSign, LineChart, PieChart, TrendingUp, Users } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
+// import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
 import { useAuth } from '@/providers/auth-provider';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -16,6 +18,7 @@ export default function DashboardPage() {
   const [usageData, setUsageData] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  console.log(usageData);
   
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -72,7 +75,7 @@ export default function DashboardPage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         {user?.role === 'admin' && (
           <Button asChild>
@@ -148,114 +151,152 @@ export default function DashboardPage() {
           </div>
           
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="col-span-2 lg:col-span-1">
-              <CardHeader>
-                <CardTitle>Token Usage Over Time</CardTitle>
-                <CardDescription>
-                  Daily token consumption across all clients
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={recentActivity}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="tokens"
-                      stroke="hsl(var(--chart-1))"
-                      fillOpacity={1}
-                      fill="url(#colorTokens)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          <Card className="col-span-2 lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Token Usage Over Time</CardTitle>
+              <CardDescription>
+                Daily token consumption across all clients
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={{
+                  chart: { type: 'areaspline', height: 280 },
+                  title: { text: '' },
+                  xAxis: {
+                    categories: recentActivity.map((item: any) => item.date),
+                    tickmarkPlacement: 'on',
+                    title: { enabled: false },
+                  },
+                  yAxis: {
+                    title: { text: 'Tokens' },
+                  },
+                  tooltip: {
+                    shared: true,
+                    valueSuffix: ' tokens',
+                  },
+                  plotOptions: {
+                    areaspline: {
+                      fillOpacity: 0.5,
+                    },
+                  },
+                  series: [{
+                    name: 'Tokens',
+                    data: recentActivity.map((item: any) => item.tokens),
+                  }],
+                }}
+              />
+            </CardContent>
+          </Card>
             
-            <Card className="col-span-2 lg:col-span-1">
-              <CardHeader>
-                <CardTitle>Translation Types</CardTitle>
-                <CardDescription>
-                  Usage breakdown by translation service type
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    data={usageData?.byType || []}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <XAxis dataKey="_id" />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                      }}
-                    />
-                    <Bar dataKey="tokens" fill="hsl(var(--chart-2))" />
-                  </RechartsBarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+          <Card className="col-span-2 lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Translation Types</CardTitle>
+              <CardDescription>
+                Usage breakdown by translation service type
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={{
+                  chart: {
+                    type: 'column',
+                    backgroundColor: 'transparent',
+                    height: 280,
+                  },
+                  title: { text: '' },
+                  xAxis: {
+                    categories: usageData.byTypes?.map((item: any) => {
+                      console.log(item);
+                      if (item.idxAiType === 'Prompt AI') {
+                        return 'Prompt AI';
+                      }
+                      if (item.idxAiType === 'Translate AI' && item.translationType) {
+                        return `TAI: ${item.translationType.charAt(0).toUpperCase()}${item.translationType.slice(1)}`;
+                      }
+                      return 'Unknown';
+                    }),
+                    title: { text: 'Type' },
+                    labels: {
+                      style: { color: '#666' }
+                    }
+                  },
+                  yAxis: {
+                    min: 0,
+                    title: { text: 'Tokens' },
+                    labels: {
+                      style: { color: '#666' }
+                    },
+                    gridLineColor: 'rgba(200,200,200,0.1)'
+                  },
+                  tooltip: {
+                    backgroundColor: 'white',
+                    borderColor: '#ccc',
+                    style: { color: '#000' },
+                    pointFormat: 'Tokens used: <b>{point.y}</b>'
+                  },
+                  plotOptions: {
+                    column: {
+                      colorByPoint: true,
+                      borderWidth: 0,
+                    }
+                  },
+                  colors: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
+                  series: [{
+                    name: 'Tokens',
+                    data: usageData.byTypes?.map((item: any) => item.tokens),
+                  }],
+                  credits: { enabled: false },
+                  legend: { enabled: false }
+                }}
+              />
+            </CardContent>
+          </Card>
             
-            <Card className="col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Top Clients</CardTitle>
-                  <CardDescription>
-                    Clients with highest token usage
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/dashboard/usage">View All</Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {usageData?.topClients?.slice(0, 5).map((client: any, index: number) => (
-                    <div key={client._id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                          <Users className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{client.clientName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatNumber(client.totalTokens)} tokens
-                          </p>
-                        </div>
+          <Card className="col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Top Clients</CardTitle>
+                <CardDescription>
+                  Clients with highest token usage
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/usage">View All</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {usageData?.topClients?.slice(0, 5).map((client: any, index: number) => (
+                  <div key={client._id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <Users className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div className="text-sm font-medium">
-                        {formatCurrency(client.totalCost)}
+                      <div>
+                        <p className="text-sm font-medium">{client.clientName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatNumber(client.totalTokens)} tokens
+                        </p>
                       </div>
                     </div>
-                  ))}
-                  
-                  {(!usageData?.topClients || usageData.topClients.length === 0) && (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-sm text-muted-foreground">No client data available</p>
+                    <div className="text-sm font-medium">
+                      {formatCurrency(client.totalCost)}
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </div>
+                ))}
+                
+                {(!usageData?.topClients || usageData.topClients.length === 0) && (
+                  <div className="flex items-center justify-center py-8">
+                    <p className="text-sm text-muted-foreground">No client data available</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         </>
       )}
     </div>

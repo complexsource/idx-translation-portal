@@ -92,7 +92,7 @@ print(result)`;
   }'`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-[50px] md:mt-[10px]">
       <h1 className="text-3xl font-bold">API Reference</h1>
       
       <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>

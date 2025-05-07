@@ -27,9 +27,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
     }
 
+    if (client.planType === 'limited') {
+      const usedTokens = client.usage?.tokens || 0;
+      const limit = client.tokenLimit || 0;
+    
+      if (usedTokens >= limit) {
+        return NextResponse.json(
+          { error: 'Your token limit has been exceeded. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Restrict access strictly to 'expert' only
     if (client.translationType !== 'expert') {
-      return NextResponse.json({ error: 'Client does not have access to expert translation' }, { status: 403 });
+      return NextResponse.json({ error: 'Client does not have access to this API' }, { status: 403 });
     }
 
     const { text, baseLanguage, targetLanguage } = await request.json();

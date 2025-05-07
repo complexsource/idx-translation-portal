@@ -97,7 +97,7 @@ export default function UsagePage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <div className="flex items-center">
           {clientId && (
             <Button variant="ghost" size="sm" asChild className="mr-2">
@@ -359,27 +359,48 @@ export default function UsagePage() {
               <CardHeader>
                 <CardTitle>Recent Usage Records</CardTitle>
                 <CardDescription>
-                  Latest translation requests
+                  Latest {client?.idxAiType === 'Prompt AI' ? 'prompt requests' : 'translation requests'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
-                  <div className="grid grid-cols-5 p-4 font-medium border-b">
-                    <div>Date</div>
-                    <div>Type</div>
-                    <div>Languages</div>
-                    <div>Tokens</div>
-                    <div>Cost</div>
-                  </div>
+                  {/* Header Row */}
+                  {client?.idxAiType === 'Prompt AI' ? (
+                    <div className="grid grid-cols-[260px_1fr_100px_100px] p-4 font-medium border-b">
+                      <div>Date</div>
+                      <div>Prompt</div>
+                      <div>Tokens</div>
+                      <div>Cost</div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 font-medium border-b">
+                      <div>Date</div>
+                      <div>Type</div>
+                      <div>Languages</div>
+                      <div>Tokens</div>
+                      <div>Cost</div>
+                    </div>
+                  )}
+
+                  {/* Data Rows */}
                   <div className="divide-y">
                     {usageData.records.slice(0, 10).map((record: any) => (
-                      <div key={record._id} className="grid grid-cols-5 p-4 text-sm">
-                        <div>{new Date(record.timestamp).toLocaleString()}</div>
-                        <div className="capitalize">{record.translationType}</div>
-                        <div>{record.baseLanguage} → {record.targetLanguage}</div>
-                        <div>{formatNumber(record.tokens)}</div>
-                        <div>{formatCurrency(record.cost)}</div>
-                      </div>
+                      client?.idxAiType === 'Prompt AI' ? (
+                        <div key={record._id} className="grid grid-cols-[260px_1fr_100px_100px] p-4 text-sm">
+                          <div>{new Date(record.timestamp).toLocaleString()}</div>
+                          <div className="truncate">{record.prompt || '—'}</div>
+                          <div>{formatNumber(record.tokens)}</div>
+                          <div>{formatCurrency(record.cost)}</div>
+                        </div>
+                      ) : (
+                        <div key={record._id} className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 text-sm">
+                          <div>{new Date(record.timestamp).toLocaleString()}</div>
+                          <div className="capitalize">{record.translationType}</div>
+                          <div>{record.baseLanguage} → {record.targetLanguage}</div>
+                          <div>{formatNumber(record.tokens)}</div>
+                          <div>{formatCurrency(record.cost)}</div>
+                        </div>
+                      )
                     ))}
                   </div>
                 </div>

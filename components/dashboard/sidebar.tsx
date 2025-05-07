@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import Image from 'next/image';
 import {
   BarChart3,
   CircleArrowRight,
@@ -107,8 +108,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
       >
         <div className="flex items-center gap-2 px-4 py-2 mb-8">
-          <CircleArrowRight className="h-6 w-6 text-primary" />
-          <h2 className="text-lg font-semibold tracking-tight">IDX Portal</h2>
+          <Image src="/images/logo/idx-logo.png" alt="IDX Logo" width={100} height={24} className="w-[100px]" />
         </div>
         <ScrollArea className="flex-1">
           <nav className="grid gap-2 px-2">
@@ -129,8 +129,8 @@ export function Sidebar({ className }: SidebarProps) {
           </nav>
         </ScrollArea>
         <div className="mt-auto grid gap-2 px-2">
-          <div className="flex items-center justify-between px-4 py-2">
-            <div className="space-y-1">
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-1 max-w-[200px]">
               <p className="text-sm font-medium">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
@@ -165,8 +165,7 @@ function MobileSidebar({
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex items-center gap-2 border-b px-7 py-4">
-        <CircleArrowRight className="h-6 w-6 text-primary" />
-        <h2 className="text-lg font-semibold tracking-tight">IDX Portal</h2>
+        <Image src="/images/logo/idx-logo.png" alt="IDX Logo" width={100} height={24} className="w-[100px]" />
       </div>
       <ScrollArea className="flex-1">
         <nav className="grid gap-2 p-4">

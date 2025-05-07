@@ -133,7 +133,7 @@ export default function ClientsPage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <h1 className="text-3xl font-bold">Clients</h1>
         {user?.role === 'admin' && (
           <Button asChild>
@@ -166,15 +166,17 @@ export default function ClientsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredClients.length > 0 ? (
             filteredClients.map((client) => (
-              <Card key={client._id} className={`overflow-hidden ${isTokenLimitExceeded(client) ? 'border-red-500 dark:border-red-700' : ''}`}>
+              <Card key={client._id} className={`flex flex-col justify-between h-full overflow-hidden ${isTokenLimitExceeded(client) ? 'border-red-500 dark:border-red-700' : ''}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle>{client.name}</CardTitle>
                       <CardDescription className="mt-1">{client.domain}</CardDescription>
                     </div>
-                    <Badge className={getTranslationTypeColor(client.translationType)}>
-                      {client.translationType.charAt(0).toUpperCase() + client.translationType.slice(1)}
+                    <Badge className={getTranslationTypeColor(client.translationType || client.idxAiType)}>
+                      {(client.translationType
+                        ? client.idxAiType + ": " + client.translationType.charAt(0).toUpperCase() + client.translationType.slice(1)
+                        : client.idxAiType)}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -205,12 +207,14 @@ export default function ClientsPage() {
                       <span className="text-muted-foreground">Plan Type:</span>
                       <span className="font-medium capitalize">{client.planType || 'unlimited'}</span>
                     </div>
-                    {client.planType === 'limited' && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Token Limit:</span>
-                        <span className="font-medium">{client.tokenLimit?.toLocaleString()}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Token Limit:</span>
+                      <span className="font-medium">
+                        {client.planType === 'limited'
+                          ? client.tokenLimit?.toLocaleString()
+                          : '♾️'}
+                      </span>
+                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tokens Used:</span>
                       <span className={`font-medium ${isTokenLimitExceeded(client) ? 'text-red-600 dark:text-red-400' : ''}`}>
@@ -219,15 +223,21 @@ export default function ClientsPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Total Cost:</span>
-                      <span className="font-medium">
-                        ${(client.usage?.cost || 0).toFixed(2)}
-                      </span>
+                      <span className="font-medium">${(client.usage?.cost || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Last Used:</span>
                       <span className="font-medium">
                         {client.usage?.lastUsed ? new Date(client.usage.lastUsed).toLocaleDateString() : 'Never'}
                       </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">AI Type:</span>
+                      <span className="font-medium">{client.idxAiType}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">AI Model:</span>
+                      <span className="font-medium">{client.aiModel}</span>
                     </div>
                   </div>
 
@@ -237,7 +247,7 @@ export default function ClientsPage() {
                     </div>
                   )}
                 </CardContent>
-                <div className="flex items-center justify-between p-4 pt-0">
+                <div className="mt-auto flex items-center justify-between p-4 pt-5 border-t">
                   <Button 
                     variant="outline" 
                     size="sm" 
