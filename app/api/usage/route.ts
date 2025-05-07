@@ -62,7 +62,8 @@ export async function GET(request: Request) {
           totalTokens: { $sum: "$tokens" },
           totalCost: { $sum: "$cost" },
           avgTokensPerRequest: { $avg: "$tokens" },
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          totalRequests: { $sum: 1 }
         }
       }
     ]).toArray();

@@ -10,6 +10,7 @@ import { BarChart, DollarSign, LineChart, PieChart, TrendingUp, Users } from 'lu
 import { useAuth } from '@/providers/auth-provider';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import dayjs from 'dayjs';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -19,6 +20,8 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   console.log(usageData);
+  console.log(recentActivity);
+  //console.log(usageData);
   
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -32,7 +35,7 @@ export default function DashboardPage() {
           // Format data for charts
           if (usageData.byDay) {
             const formattedDailyData = usageData.byDay.map((day: any) => ({
-              date: `${day._id.month}/${day._id.day}`,
+              date: `${day._id.day}/${day._id.month}/${day._id.year}`,
               tokens: day.tokens,
               requests: day.count,
             }));
@@ -159,34 +162,62 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px]">
-              <HighchartsReact
-                highcharts={Highcharts}
-                options={{
-                  chart: { type: 'areaspline', height: 280 },
-                  title: { text: '' },
-                  xAxis: {
-                    categories: recentActivity.map((item: any) => item.date),
-                    tickmarkPlacement: 'on',
-                    title: { enabled: false },
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={{
+                chart: {
+                  type: 'areaspline',
+                  backgroundColor: 'transparent',
+                  height: 280,
+                },
+                title: { text: '' },
+                xAxis: {
+                  categories: recentActivity.map((item: any) =>
+                    dayjs(item.date).format('MMM DD YYYY')
+                  ),
+                  tickmarkPlacement: 'on',
+                  title: { text: null },
+                  labels: {
+                    style: { color: '#aaa' }, // dark-friendly
                   },
-                  yAxis: {
-                    title: { text: 'Tokens' },
+                  lineColor: 'rgba(255,255,255,0.1)',
+                  gridLineColor: 'rgba(255,255,255,0.05)',
+                },
+                yAxis: {
+                  title: { text: null },
+                  labels: {
+                    style: { color: '#aaa' },
                   },
-                  tooltip: {
-                    shared: true,
-                    valueSuffix: ' tokens',
-                  },
-                  plotOptions: {
-                    areaspline: {
-                      fillOpacity: 0.5,
+                  gridLineColor: 'rgba(255,255,255,0.05)',
+                },
+                tooltip: {
+                  shared: true,
+                  valueSuffix: ' tokens',
+                  backgroundColor: '#222',
+                  borderColor: '#555',
+                  style: { color: '#fff' },
+                },
+                plotOptions: {
+                  areaspline: {
+                    fillOpacity: 0.3,
+                    marker: {
+                      enabled: true,
+                      radius: 4,
+                      Symbol: 'circle'
                     },
+                    lineWidth: 2,
+                    color: '#00c3ff', // bright blue for dark bg
                   },
-                  series: [{
-                    name: 'Tokens',
-                    data: recentActivity.map((item: any) => item.tokens),
-                  }],
-                }}
-              />
+                },
+                series: [{
+                  name: 'Tokens',
+                  data: recentActivity.map((item: any) => item.tokens),
+                  showInLegend: false,
+                }],
+                legend: { enabled: false },
+                credits: { enabled: false },
+              }}
+            />
             </CardContent>
           </Card>
             
@@ -208,27 +239,14 @@ export default function DashboardPage() {
                   },
                   title: { text: '' },
                   xAxis: {
-                    categories: usageData.byTypes?.map((item: any) => {
-                      console.log(item);
-                      if (item.idxAiType === 'Prompt AI') {
-                        return 'Prompt AI';
-                      }
-                      if (item.idxAiType === 'Translate AI' && item.translationType) {
-                        return `TAI: ${item.translationType.charAt(0).toUpperCase()}${item.translationType.slice(1)}`;
-                      }
-                      return 'Unknown';
-                    }),
-                    title: { text: 'Type' },
-                    labels: {
-                      style: { color: '#666' }
-                    }
+                    categories: usageData.byTypes?.map((item: any) => item.label),
+                    title: { text: null }, // Removed axis title
+                    labels: { style: { color: '#666' } }
                   },
                   yAxis: {
                     min: 0,
-                    title: { text: 'Tokens' },
-                    labels: {
-                      style: { color: '#666' }
-                    },
+                    title: { text: null }, // Removed axis title
+                    labels: { style: { color: '#666' } },
                     gridLineColor: 'rgba(200,200,200,0.1)'
                   },
                   tooltip: {
@@ -249,7 +267,16 @@ export default function DashboardPage() {
                     data: usageData.byTypes?.map((item: any) => item.tokens),
                   }],
                   credits: { enabled: false },
-                  legend: { enabled: false }
+                  legend: { enabled: false },
+                  accessibility: {
+                    enabled: true,
+                    keyboardNavigation: {
+                      enabled: true,
+                      focusBorder: { style: { color: '#000', borderWidth: 2 } }
+                    },
+                    landmarkVerbosity: 'one',
+                    describeSingleSeries: true
+                  }
                 }}
               />
             </CardContent>

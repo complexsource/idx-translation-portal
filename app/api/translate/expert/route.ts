@@ -128,6 +128,7 @@ ${text}`;
     await db.collection('usageRecords').insertOne({
       clientId: client._id,
       clientName: client.name,
+      idxAiType: 'Translate AI',
       translationType: 'expert',
       tokens: totalTokens,
       cost: totalCost,

@@ -22,6 +22,9 @@ import {
   Cell,
 } from 'recharts';
 import { ChevronLeft, Wallet } from 'lucide-react';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
+import dayjs from 'dayjs';
 
 export default function UsagePage() {
   const searchParams = useSearchParams();
@@ -31,9 +34,11 @@ export default function UsagePage() {
   const [client, setClient] = useState<any>(null);
   const [usageData, setUsageData] = useState<any>(null);
   const [period, setPeriod] = useState('30days');
+  console.log(usageData);
   
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
-  
+
+  console.log(usageData);  
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -94,6 +99,12 @@ export default function UsagePage() {
       default: return 'Last 30 Days';
     }
   };
+
+  const [search, setSearch] = useState('');
+  const filteredClients = usageData?.topClients
+  ?.filter((client: any) =>
+    client.clientName.toLowerCase().includes(search.toLowerCase())
+  ).slice(0, 20);
   
   return (
     <div className="space-y-6">
@@ -197,105 +208,174 @@ export default function UsagePage() {
           </div>
           
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="col-span-2 lg:col-span-1">
-              <CardHeader>
-                <CardTitle>Token Usage Over Time</CardTitle>
-                <CardDescription>
-                  Daily token consumption
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                {usageData?.byDay?.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={usageData.byDay.map((day: any) => ({
-                        date: `${day._id.month}/${day._id.day}`,
-                        tokens: day.tokens,
-                      }))}
-                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                        }}
-                        formatter={(value: number) => [formatNumber(value), 'Tokens']}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="tokens"
-                        stroke="hsl(var(--chart-1))"
-                        fill="hsl(var(--chart-1)/0.3)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <Wallet className="h-12 w-12 text-muted-foreground mb-2" />
-                    <h3 className="font-medium">No data available</h3>
-                    <p className="text-sm text-muted-foreground">
-                      No usage data for this period
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="col-span-2 lg:col-span-1">
-              <CardHeader>
-                <CardTitle>Usage by Translation Type</CardTitle>
-                <CardDescription>
-                  Distribution across different translation services
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                {usageData?.byType?.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={usageData.byType}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="tokens"
-                        nameKey="_id"
-                        label={({ _id, percent }: any) => 
-                          `${_id} ${(percent * 100).toFixed(0)}%`
+          <Card className="col-span-2 lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Token Usage Over Time</CardTitle>
+              <CardDescription>Daily token consumption</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              {usageData?.byDay?.length > 0 ? (
+                <HighchartsReact
+                highcharts={Highcharts}
+                options={{
+                  chart: {
+                    type: 'areaspline',
+                    backgroundColor: 'transparent',
+                    height: 280
+                  },
+                  title: { text: null },
+                  xAxis: {
+                    categories: usageData.byDay.map((day: any) =>
+                      dayjs(`${day._id.month}/${day._id.day}/${day._id.year}`, 'M/D').format('MMM DD YYYY')
+                    ),
+                    tickmarkPlacement: 'on',
+                    labels: { style: { color: '#aaa' } },
+                    lineColor: 'rgba(255,255,255,0.1)',
+                    gridLineColor: 'rgba(255,255,255,0.05)',
+                    title: { text: null }
+                  },
+                  yAxis: {
+                    min: 0,
+                    title: { text: null },
+                    labels: { style: { color: '#aaa' } },
+                    gridLineColor: 'rgba(255,255,255,0.05)'
+                  },
+                  tooltip: {
+                    shared: false, // ✅ separate tooltip per point
+                    useHTML: true,
+                    backgroundColor: 'hsl(var(--background))',
+                    borderColor: 'hsl(var(--border))',
+                    style: { color: 'var(--foreground)' },
+                    formatter: function (this: Highcharts.Point): string {
+                      console.log(this);
+                      return `
+                        <!-- <strong>${this.x}</strong><br/> -->
+                        Tokens: <b>${(this.y as number).toLocaleString()}</b>
+                      `;
+                    }            
+                  },
+                  plotOptions: {
+                    areaspline: {
+                      fillOpacity: 0.3,
+                      lineWidth: 2,
+                      marker: {
+                        enabled: true,
+                        radius: 4,
+                        symbol: 'circle'
+                      },
+                      color: 'hsl(var(--chart-1))',
+                      states: {
+                        hover: {
+                          lineWidth: 3
                         }
-                      >
-                        {usageData.byType.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                        }}
-                        formatter={(value: number, name: string) => [
-                          formatNumber(value), 
-                          name
-                        ]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <Wallet className="h-12 w-12 text-muted-foreground mb-2" />
-                    <h3 className="font-medium">No data available</h3>
-                    <p className="text-sm text-muted-foreground">
-                      No usage data for this period
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                      }
+                    }
+                  },
+                  series: [
+                    {
+                      name: 'Tokens',
+                      data: usageData.byDay.map((day: any) => day.tokens),
+                      showInLegend: false
+                    }
+                  ],
+                  credits: { enabled: false },
+                  legend: { enabled: false },
+                  accessibility: { enabled: true }
+                }}
+              />        
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Wallet className="h-12 w-12 text-muted-foreground mb-2" />
+                  <h3 className="font-medium">No data available</h3>
+                  <p className="text-sm text-muted-foreground">
+                    No usage data for this period
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+            
+          <Card className="col-span-2 lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Usage by Translation Type</CardTitle>
+              <CardDescription>
+                Distribution across different translation services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              {usageData?.byTypes?.length > 0 ? (
+                <HighchartsReact
+                highcharts={Highcharts}
+                options={{
+                  chart: {
+                    type: 'pie',
+                    backgroundColor: 'transparent',
+                    height: 280
+                  },
+                  title: { text: null },
+                  tooltip: {
+                    useHTML: true,
+                    backgroundColor: '#222',
+                    borderColor: '#555',
+                    style: { color: '#fff' },
+                    formatter: function (this: Highcharts.Point): string {
+                      return `
+                        <span style="color: white"><b>${this.name}</b></span><br/>
+                        ${this.percentage?.toFixed(0)}% (${this.y} tokens)
+                      `;
+                    }                    
+                  },
+                  plotOptions: {
+                    pie: {
+                      allowPointSelect: true,
+                      cursor: 'pointer',
+                      dataLabels: {
+                        enabled: true,
+                        format: '{point.percentage:.0f}%', // ✅ Only percentage
+                        style: { color: '#ccc' }
+                      },
+                      showInLegend: true
+                    }
+                  },
+                  series: [
+                    {
+                      name: 'Tokens',
+                      colorByPoint: true,
+                      data: usageData.byTypes.map((entry: any) => ({
+                        name: entry.label,
+                        y: entry.tokens
+                      }))
+                    }
+                  ],
+                  legend: {
+                    enabled: true,
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle: {
+                      color: '#ccc',
+                      fontWeight: 'normal'
+                    }
+                  },
+                  credits: { enabled: false },
+                  accessibility: {
+                    enabled: true,
+                    point: { valueSuffix: ' tokens' }
+                  }
+                }}
+              />    
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Wallet className="h-12 w-12 text-muted-foreground mb-2" />
+                  <h3 className="font-medium">No data available</h3>
+                  <p className="text-sm text-muted-foreground">
+                    No usage data for this period
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
           
           {!clientId && (
             <Card>
@@ -307,40 +387,66 @@ export default function UsagePage() {
               </CardHeader>
               <CardContent>
                 {usageData?.topClients?.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart
-                      layout="vertical"
-                      data={usageData.topClients.map((client: any) => ({
-                        name: client.clientName,
-                        tokens: client.totalTokens,
-                        cost: client.totalCost,
-                      }))}
-                      margin={{ top: 20, right: 30, left: 100, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
-                          border: '1px solid hsl(var(--border))',
-                        }}
-                        formatter={(value: number, name: string) => [
-                          name === 'tokens' ? formatNumber(value) : formatCurrency(value),
-                          name === 'tokens' ? 'Tokens' : 'Cost'
-                        ]}
-                      />
-                      <Bar 
-                        dataKey="tokens" 
-                        fill="hsl(var(--chart-2))" 
-                        name="Tokens"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Search client..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="mb-4 w-full px-3 py-2 text-sm border rounded-md bg-background text-foreground border-border"
+                    />
+
+                    <HighchartsReact
+                      highcharts={Highcharts}
+                      options={{
+                        chart: {
+                          type: 'bar',
+                          backgroundColor: 'transparent',
+                          height: Math.max(400, filteredClients.length * 30),
+                        },
+                        title: { text: null },
+                        xAxis: {
+                          categories: filteredClients.map((c: { clientName: string }) => c.clientName),
+                          title: { text: null },
+                          labels: { style: { color: '#ccc', fontSize: '12px' } }
+                        },
+                        yAxis: {
+                          min: 0,
+                          title: { text: null },
+                          labels: { style: { color: '#aaa' } },
+                          gridLineColor: 'rgba(255,255,255,0.05)'
+                        },
+                        tooltip: {
+                          useHTML: true,
+                          backgroundColor: '#222',
+                          borderColor: '#555',
+                          style: { color: '#fff' },
+                          formatter: function (this: Highcharts.Point): string {
+                            const client = filteredClients[this.index];
+                            return `
+                              <b>${client.clientName}</b><br/>
+                              Tokens: ${client.totalTokens.toLocaleString()}<br/>
+                              Cost: $${parseFloat(client.totalCost.toFixed(6))}
+                            `;
+                          }                          
+                        },
+                        plotOptions: {
+                          bar: {
+                            borderWidth: 0,
+                            color: '#00c3ff',
+                          }
+                        },
+                        series: [{
+                          name: 'Tokens',
+                          data: filteredClients.map((c: { totalTokens: number }) => c.totalTokens),
+                          showInLegend: false,
+                        }],
+                        credits: { enabled: false },
+                        legend: { enabled: false },
+                        accessibility: { enabled: true }
+                      }}
+                    />
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-64">
                     <Wallet className="h-12 w-12 text-muted-foreground mb-2" />

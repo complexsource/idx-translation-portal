@@ -114,7 +114,8 @@ ${text}`;
       {
         $inc: {
           'usage.tokens': totalTokens,
-          'usage.cost': totalCost
+          'usage.cost': totalCost,
+          'usage.totalRequests': 1
         },
         $set: { 'usage.lastUsed': new Date() }
       }
@@ -123,6 +124,7 @@ ${text}`;
     await db.collection('usageRecords').insertOne({
       clientId: client._id,
       clientName: client.name,
+      idxAiType: 'Translate AI',
       translationType: 'advanced',
       tokens: totalTokens,
       cost: totalCost,
