@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { CirclePlus, PencilIcon, ShieldAlert, Trash2, UserCog, Users } from 'lucide-react';
+import { CirclePlus, PencilIcon, ShieldAlert, Trash2, UserCog, Users, Building2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,10 +22,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function UsersPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,8 +36,9 @@ export default function UsersPage() {
     email: '',
     password: '',
     role: 'viewer',
+    clientId: ''
   });
-  
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -48,26 +51,39 @@ export default function UsersPage() {
         }
       } catch (error) {
         console.error('Error fetching users:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to load user data.',
-        });
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to load user data.' });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
+    const fetchClients = async () => {
+      try {
+        const res = await fetch('/api/clients');
+        if (res.ok) {
+          const data = await res.json();
+          setClients(data);
+        }
+      } catch (err) {
+        console.error('Error fetching clients:', err);
+      }
+    };
+
     fetchUsers();
+    fetchClients();
   }, [toast]);
+
+  const handleClientChange = (value: string) => {
+    setFormData(prev => ({ ...prev, clientId: value }));
+  };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleRoleChange = (value: string) => {
-    setFormData(prev => ({ ...prev, role: value }));
+    setFormData(prev => ({ ...prev, role: value, clientId: '' }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,8 +100,16 @@ export default function UsersPage() {
         });
         return;
       }
-      
-      // Submit to API
+  
+      if (formData.role === 'client' && !formData.clientId) {
+        toast({
+          variant: 'destructive',
+          title: 'Validation Error',
+          description: 'Please select a client for the user.',
+        });
+        return;
+      }
+  
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: {
@@ -94,30 +118,29 @@ export default function UsersPage() {
         },
         body: JSON.stringify(formData),
       });
-      
+  
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Failed to create user');
       }
-      
-      // Refresh user list
+  
       const usersRes = await fetch('/api/users');
       if (usersRes.ok) {
         const data = await usersRes.json();
         setUsers(data);
       }
-      
+  
       toast({
         title: 'User Created',
         description: 'The user has been successfully created.',
       });
-      
-      // Reset form and close dialog
+  
       setFormData({
         name: '',
         email: '',
         password: '',
         role: 'viewer',
+        clientId: ''
       });
       setIsAddDialogOpen(false);
     } catch (error: any) {
@@ -182,82 +205,71 @@ export default function UsersPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input id="name" name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} required />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input id="email" name="email" type="email" placeholder="john@example.com" value={formData.email} onChange={handleChange} required />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required />
                 </div>
                 <div className="grid gap-2">
                   <Label>Role</Label>
-                  <RadioGroup
-                    value={formData.role}
-                    onValueChange={handleRoleChange}
-                  >
-                    <div className="flex items-start space-x-3 space-y-0 rounded-md border p-3">
+                  <RadioGroup value={formData.role} onValueChange={handleRoleChange}>
+                    <div className="flex items-start space-x-3 border p-3">
                       <RadioGroupItem value="admin" id="admin" className="mt-1" />
                       <div className="space-y-1">
                         <Label htmlFor="admin" className="font-medium">Admin</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Full access to create, update, and delete all resources.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Full access to create, update, and delete all resources.</p>
                       </div>
                     </div>
-                    <div className="flex items-start space-x-3 space-y-0 rounded-md border p-3">
+                    <div className="flex items-start space-x-3 border p-3">
                       <RadioGroupItem value="viewer" id="viewer" className="mt-1" />
                       <div className="space-y-1">
                         <Label htmlFor="viewer" className="font-medium">Viewer</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Read-only access to view clients and usage data.
-                        </p>
+                        <p className="text-sm text-muted-foreground">Read-only access to view clients and usage data.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3 border p-3">
+                      <RadioGroupItem value="client" id="client" className="mt-1" />
+                      <div className="space-y-1">
+                        <Label htmlFor="client" className="font-medium">Client</Label>
+                        <p className="text-sm text-muted-foreground">Restricted access to their own client account data.</p>
                       </div>
                     </div>
                   </RadioGroup>
                 </div>
+                {formData.role === 'client' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="clientId">Assign Client</Label>
+                    <Select value={formData.clientId} onValueChange={handleClientChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a client..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map(client => (
+                          <SelectItem key={client._id} value={client._id}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    'Create User'
-                  )}
+                    <><div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div> Creating...</>
+                  ) : 'Create User'}
                 </Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-      
+
+      {/* Cards render logic updated below */}
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
           <div className="flex flex-col items-center gap-2">
@@ -273,21 +285,12 @@ export default function UsersPage() {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle>{user.name}</CardTitle>
-                    <Badge
-                      variant={user.role === 'admin' ? 'default' : 'secondary'}
-                      className="ml-auto"
-                    >
-                      {user.role === 'admin' ? (
-                        <div className="flex items-center">
-                          <ShieldAlert className="mr-1 h-3 w-3" />
-                          Admin
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <UserCog className="mr-1 h-3 w-3" />
-                          Viewer
-                        </div>
-                      )}
+                    <Badge className="ml-auto">
+                      <div className="flex items-center">
+                        {user.role === 'admin' && <><ShieldAlert className="mr-1 h-3 w-3" /> Admin</>}
+                        {user.role === 'viewer' && <><UserCog className="mr-1 h-3 w-3" /> Viewer</>}
+                        {user.role === 'client' && <><Building2 className="mr-1 h-3 w-3" />Client: {clients.find(c => c._id === user.clientId)?.name || 'Client'}</>}
+                      </div>
                     </Badge>
                   </div>
                   <CardDescription>{user.email}</CardDescription>
@@ -300,11 +303,7 @@ export default function UsersPage() {
                 <div className="flex justify-end px-6 pb-4">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
+                      <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                         <span className="sr-only">Delete</span>
                       </Button>

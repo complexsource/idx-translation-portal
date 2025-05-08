@@ -118,7 +118,7 @@ export function Sidebar({ className }: SidebarProps) {
                 href={route.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
+                  "flex items-center gap-3 rounded-none px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
                   route.active ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                 )}
               >
@@ -175,7 +175,7 @@ function MobileSidebar({
               href={route.href}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
+                "flex items-center gap-3 rounded-none px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
                 route.active ? "bg-accent text-accent-foreground" : "text-muted-foreground"
               )}
             >

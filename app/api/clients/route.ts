@@ -38,12 +38,19 @@ export async function POST(request: Request) {
     } = await request.json();
 
     // Required field checks
-    if (!name || !email || !domain || !planType || !aiModel || !idxAiType) {
+    if (!name || !email || !domain || !planType || !idxAiType) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+    
+    if (translationType === 'Translate AI' && !aiModel) {
+      return NextResponse.json(
+        { error: 'AI Model is required' },
+        { status: 400 }
+      );
+    }    
 
     if (!['limited', 'unlimited'].includes(planType)) {
       return NextResponse.json(

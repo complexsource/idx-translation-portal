@@ -77,57 +77,56 @@ export async function PUT(
 
     const isSelf = currentUser.id === id;
     if (currentUser.role !== 'admin' && !isSelf) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     if (!ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
     }
 
-    const { name, email, password, role } = await request.json();
-
-    if (currentUser.role !== 'admin' && (email || role)) {
-      return NextResponse.json(
-        { error: 'Forbidden: Can only update name and password' },
-        { status: 403 }
-      );
-    }
-
+    const { name, email, password, role, clientId } = await request.json();
     const db = await getDb();
-    const existingUser = await db.collection('users').findOne({ _id: new ObjectId(id) });
 
+    const existingUser = await db.collection('users').findOne({ _id: new ObjectId(id) });
     if (!existingUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const updateData: any = {};
     if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (role) {
-      if (!['admin', 'viewer'].includes(role)) {
-        return NextResponse.json(
-          { error: 'Invalid role' },
-          { status: 400 }
-        );
+
+    if (currentUser.role === 'admin') {
+      if (email) updateData.email = email;
+
+      if (role) {
+        if (!['admin', 'viewer', 'client'].includes(role)) {
+          return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+        }
+        updateData.role = role;
+
+        if (role === 'client') {
+          if (!clientId) {
+            return NextResponse.json({ error: 'Client ID is required for client role' }, { status: 400 });
+          }
+          updateData.clientId = clientId;
+        } else {
+          updateData.clientId = null;
+        }
       }
-      updateData.role = role;
+    } else {
+      if (email || role || clientId) {
+        return NextResponse.json({
+          error: 'Forbidden: Only name and password can be updated by non-admins',
+        }, { status: 403 });
+      }
     }
-    if (password) updateData.password = await bcrypt.hash(password, 10);
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: 'No fields to update' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
     const result = await db.collection('users').updateOne(
@@ -136,19 +135,13 @@ export async function PUT(
     );
 
     if (result.modifiedCount === 0) {
-      return NextResponse.json(
-        { error: 'User not updated' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User not updated' }, { status: 400 });
     }
 
     return NextResponse.json({ message: 'User updated successfully' });
   } catch (error) {
     console.error('Error updating user:', error);
-    return NextResponse.json(
-      { error: 'Error updating user' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error updating user' }, { status: 500 });
   }
 }
 

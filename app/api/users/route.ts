@@ -55,37 +55,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { name, email, password, role } = await request.json();
+    const { name, email, password, role, clientId } = await request.json();
 
     if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    if (!['admin', 'viewer'].includes(role)) {
-      return NextResponse.json(
-        { error: 'Invalid role' },
-        { status: 400 }
-      );
+    if (!['admin', 'viewer', 'client'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
-
+    
+    if (role === 'client' && !clientId) {
+      return NextResponse.json({ error: 'Client ID is required for client role' }, { status: 400 });
+    }
+    
     const db = await getDb();
     const existingUser = await db.collection('users').findOne({ email });
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
-
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.collection('users').insertOne({
       name,
       email,
       password: hashedPassword,
       role,
+      clientId: role === 'client' ? clientId : null,
       createdAt: new Date(),
     });
 

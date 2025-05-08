@@ -9,7 +9,7 @@ export default function DashboardLayout({
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 md:ml-64">
-        <div className="h-full p-6">{children}</div>
+        <div className="h-full p-6 bg-muted">{children}</div>
       </main>
     </div>
   );

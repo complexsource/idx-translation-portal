@@ -97,7 +97,10 @@ export async function GET(request: Request) {
             _id: "$clientId",
             clientName: { $first: "$clientName" },
             totalTokens: { $sum: "$tokens" },
-            totalCost: { $sum: "$cost" }
+            totalCost: { $sum: "$cost" },
+            avgTokensPerRequest: { $avg: "$tokens" },
+            count: { $sum: 1 },
+            totalRequests: { $sum: 1 }
           }
         },
         { $sort: { totalTokens: -1 } },

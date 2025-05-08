@@ -393,7 +393,7 @@ export default function UsagePage() {
                       placeholder="Search client..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="mb-4 w-full px-3 py-2 text-sm border rounded-md bg-background text-foreground border-border"
+                      className="mb-4 w-full px-3 py-2 text-sm border rounded-none bg-background text-foreground border-border"
                     />
 
                     <HighchartsReact
@@ -469,7 +469,7 @@ export default function UsagePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
+                <div className="rounded-none border">
                   {/* Header Row */}
                   {client?.idxAiType === 'Prompt AI' ? (
                     <div className="grid grid-cols-[260px_1fr_100px_100px] p-4 font-medium border-b">

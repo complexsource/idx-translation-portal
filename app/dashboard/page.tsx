@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { BarChart, DollarSign, LineChart, PieChart, TrendingUp, Users } from 'lucide-react';
-// import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
+import { BarChart, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -19,22 +18,18 @@ export default function DashboardPage() {
   const [usageData, setUsageData] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
   console.log(usageData);
-  console.log(recentActivity);
-  //console.log(usageData);
-  
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch usage data
         const usageRes = await fetch('/api/usage', { cache: 'no-store' });
         if (usageRes.ok) {
-          const usageData = await usageRes.json();
-          setUsageData(usageData);
-          
-          // Format data for charts
-          if (usageData.byDay) {
-            const formattedDailyData = usageData.byDay.map((day: any) => ({
+          const usage = await usageRes.json();
+          setUsageData(usage);
+          if (usage.byDay) {
+            const formattedDailyData = usage.byDay.map((day: any) => ({
               date: `${day._id.day}/${day._id.month}/${day._id.year}`,
               tokens: day.tokens,
               requests: day.count,
@@ -42,12 +37,16 @@ export default function DashboardPage() {
             setRecentActivity(formattedDailyData);
           }
         }
-        
-        // Fetch clients
-        const clientsRes = await fetch('/api/clients', { cache: 'no-store' });
-        if (clientsRes.ok) {
-          const clientsData = await clientsRes.json();
-          setClients(clientsData);
+
+        // Only fetch clients if admin
+        if (user?.role === 'admin') {
+          const clientsRes = await fetch('/api/clients', { cache: 'no-store' });
+          if (clientsRes.ok) {
+            const clientsData = await clientsRes.json();
+            setClients(clientsData);
+          }
+        } else if (user?.role === 'client') {
+          setClients([{ _id: user.clientId, name: user.name }]);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -60,22 +59,18 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchDashboardData();
-  }, [toast]);
-  
+  }, [toast, user]);
+
   const formatCurrency = (value: number) => {
-    const formatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 6,
-      maximumFractionDigits: 6,
-    }).format(value);
-    return `$${formatted}`;
-  };  
-  
+    return `$${value.toFixed(6)}`;
+  };
+
   const formatNumber = (value: number) => {
     return new Intl.NumberFormat('en-US').format(value);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
@@ -86,7 +81,7 @@ export default function DashboardPage() {
           </Button>
         )}
       </div>
-      
+
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
           <div className="flex flex-col items-center gap-2">
@@ -103,7 +98,7 @@ export default function DashboardPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{clients?.length || 0}</div>
+                <div className="text-2xl font-bold">{clients.length}</div>
                 <p className="text-xs text-muted-foreground">
                   Active translation service accounts
                 </p>
@@ -116,10 +111,16 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatNumber(usageData?.summary?.totalTokens || 0)}
+                  {formatNumber(
+                    user?.role === 'client'
+                      ? usageData?.records
+                          ?.filter((r: any) => r.clientId === user.clientId)
+                          .reduce((sum: number, r: any) => sum + r.tokens, 0) || 0
+                      : usageData?.summary?.totalTokens || 0
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Tokens processed across all clients
+                  Tokens processed
                 </p>
               </CardContent>
             </Card>

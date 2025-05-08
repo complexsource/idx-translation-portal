@@ -7,15 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { 
-  CirclePlus, 
-  Copy, 
+import {
+  CirclePlus,
+  Copy,
   EyeIcon,
   Mail,
-  Pencil, 
-  Search, 
-  Trash2, 
-  Users
+  Pencil,
+  Search,
+  Trash2,
+  Users,
+  List,
+  LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 import {
@@ -37,7 +39,8 @@ export default function ClientsPage() {
   const [filteredClients, setFilteredClients] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+
   useEffect(() => {
     const fetchClients = async () => {
       try {
@@ -60,16 +63,16 @@ export default function ClientsPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchClients();
   }, [toast]);
-  
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredClients(clients);
     } else {
       const filtered = clients.filter(
-        client => 
+        client =>
           client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           client.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
           client.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -77,7 +80,7 @@ export default function ClientsPage() {
       setFilteredClients(filtered);
     }
   }, [searchQuery, clients]);
-  
+
   const copyApiKey = (apiKey: string) => {
     navigator.clipboard.writeText(apiKey);
     toast({
@@ -85,13 +88,13 @@ export default function ClientsPage() {
       description: 'The API key has been copied to your clipboard.',
     });
   };
-  
+
   const handleDeleteClient = async (id: string) => {
     try {
       const res = await fetch(`/api/clients/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         setClients(prev => prev.filter(client => client._id !== id));
         toast({
@@ -110,7 +113,7 @@ export default function ClientsPage() {
       });
     }
   };
-  
+
   const getTranslationTypeColor = (type: string) => {
     switch (type) {
       case 'basic':
@@ -130,21 +133,37 @@ export default function ClientsPage() {
     }
     return false;
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <h1 className="text-3xl font-bold">Clients</h1>
-        {user?.role === 'admin' && (
-          <Button asChild>
-            <Link href="/dashboard/clients/new">
-              <CirclePlus className="mr-2 h-4 w-4" />
-              Add New Client
-            </Link>
+        <div className="flex items-center gap-3">
+          <Button
+            variant={viewType === 'grid' ? 'default' : 'outline'}
+            size="icon"
+            onClick={() => setViewType('grid')}
+          >
+            <LayoutGrid className="h-4 w-4" />
           </Button>
-        )}
+          <Button
+            variant={viewType === 'list' ? 'default' : 'outline'}
+            size="icon"
+            onClick={() => setViewType('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          {user?.role === 'admin' && (
+            <Button asChild>
+              <Link href="/dashboard/clients/new">
+                <CirclePlus className="mr-2 h-4 w-4" />
+                Add New Client
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
-      
+
       <div className="flex w-full max-w-sm items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -154,7 +173,7 @@ export default function ClientsPage() {
           className="w-full"
         />
       </div>
-      
+
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
           <div className="flex flex-col items-center gap-2">
@@ -163,7 +182,7 @@ export default function ClientsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={viewType === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
           {filteredClients.length > 0 ? (
             filteredClients.map((client) => (
               <Card key={client._id} className={`flex flex-col justify-between h-full overflow-hidden ${isTokenLimitExceeded(client) ? 'border-red-500 dark:border-red-700' : ''}`}>
@@ -197,11 +216,10 @@ export default function ClientsPage() {
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="bg-muted p-2 rounded-md overflow-hidden">
+                    <div className="bg-muted p-2 rounded-none overflow-hidden">
                       <p className="text-xs font-mono truncate">{client.apiKey}</p>
                     </div>
                   </div>
-                  
                   <div className="pt-2 space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Plan Type:</span>
@@ -210,9 +228,7 @@ export default function ClientsPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Token Limit:</span>
                       <span className="font-medium">
-                        {client.planType === 'limited'
-                          ? client.tokenLimit?.toLocaleString()
-                          : '♾️'}
+                        {client.planType === 'limited' ? client.tokenLimit?.toLocaleString() : '♾️'}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -223,7 +239,7 @@ export default function ClientsPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Total Cost:</span>
-                      <span className="font-medium">${(client.usage?.cost || 0).toFixed(2)}</span>
+                      <span className="font-medium">${(client.usage?.cost || 0).toFixed(6)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Last Used:</span>
@@ -235,53 +251,39 @@ export default function ClientsPage() {
                       <span className="text-muted-foreground">AI Type:</span>
                       <span className="font-medium">{client.idxAiType}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">AI Model:</span>
-                      <span className="font-medium">{client.aiModel}</span>
-                    </div>
+                    {client.aiModel && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">AI Model:</span>
+                        <span className="font-medium">{client.aiModel}</span>
+                      </div>
+                    )}
                   </div>
 
                   {isTokenLimitExceeded(client) && (
-                    <div className="mt-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-md text-sm">
+                    <div className="mt-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-none text-sm">
                       Token limit exceeded! Please upgrade the plan.
                     </div>
                   )}
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between p-4 pt-5 border-t">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-xs"
-                    asChild
-                  >
+                  <Button variant="outline" size="sm" className="text-xs" asChild>
                     <Link href={`/dashboard/usage?clientId=${client._id}`}>
                       <EyeIcon className="mr-1 h-3 w-3" />
                       View Usage
                     </Link>
                   </Button>
-                  
                   <div className="flex items-center gap-2">
                     {user?.role === 'admin' && (
                       <>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          asChild 
-                          className="h-8 w-8"
-                        >
+                        <Button variant="outline" size="icon" asChild className="h-8 w-8">
                           <Link href={`/dashboard/clients/${client._id}`}>
                             <Pencil className="h-3 w-3" />
                             <span className="sr-only">Edit</span>
                           </Link>
                         </Button>
-                        
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            >
+                            <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive">
                               <Trash2 className="h-3 w-3" />
                               <span className="sr-only">Delete</span>
                             </Button>
@@ -295,10 +297,7 @@ export default function ClientsPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteClient(client._id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
+                              <AlertDialogAction onClick={() => handleDeleteClient(client._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>

@@ -21,10 +21,10 @@ export default function NewClientPage() {
     email: '',
     domain: '',
     translationType: 'basic',
-    planType: 'unlimited',
+    planType: '',
     tokenLimit: '',
-    aiModel: 'gpt-4o-mini',
-    idxAiType: 'Prompt AI',
+    aiModel: '',
+    idxAiType: 'Translate AI',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,23 +189,6 @@ export default function NewClientPage() {
               </div>
             )}
 
-            {/* AI Model Selection */}
-            <div className="space-y-2">
-              <Label>Select AI Model</Label>
-              <Select
-                value={formData.aiModel}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, aiModel: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select AI model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
-                  <SelectItem value="gpt-4o">gpt-4o</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* IDX AI Type */}
             <div className="space-y-2">
               <Label>Select IDX AI Type</Label>
@@ -223,6 +206,25 @@ export default function NewClientPage() {
               </Select>
             </div>
 
+            {/* AI Model Selection */}
+            {formData.idxAiType != 'Translate AI' && (
+              <div className="space-y-2">
+                <Label>Select AI Model</Label>
+                <Select
+                  value={formData.aiModel}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, aiModel: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select AI model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
+                    <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Translation Type (conditional) */}
             {formData.idxAiType === 'Translate AI' && (
               <div className="space-y-4">
@@ -232,25 +234,25 @@ export default function NewClientPage() {
                   onValueChange={handleTranslationTypeChange}
                   className="grid grid-cols-1 md:grid-cols-3 gap-4"
                 >
-                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="basic" id="basic" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="basic" className="font-medium cursor-pointer">Basic</Label>
-                      <p className="text-sm text-muted-foreground">Standard translation capabilities.</p>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Essential translation with reliable accuracy for general content.</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="advanced" id="advanced" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="advanced" className="font-medium cursor-pointer">Advanced</Label>
-                      <p className="text-sm text-muted-foreground">Better context handling.</p>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Enhanced translation with improved contextual understanding and linguistic precision.</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="expert" id="expert" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="expert" className="font-medium cursor-pointer">Expert</Label>
-                      <p className="text-sm text-muted-foreground">Highest quality and customization.</p>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Premium-grade translation with the highest fluency, tone adaptation, and customizable output tailored to your domain.</p>
                     </div>
                   </div>
                 </RadioGroup>

@@ -6,7 +6,8 @@ type User = {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'viewer' | 'client';
+  clientId?: string;
 };
 
 type AuthContextType = {
@@ -14,7 +15,13 @@ type AuthContextType = {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  register: (name: string, email: string, password: string, role: 'admin' | 'viewer') => Promise<boolean>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    role: 'admin' | 'viewer' | 'client',
+    clientId?: string
+  ) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -79,7 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: 'admin' | 'viewer') => {
+  const register = async (
+    name: string,
+    email: string,
+    password: string,
+    role: 'admin' | 'viewer' | 'client',
+    clientId?: string
+  ) => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
@@ -87,21 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, clientId }),
       });
-
-      if (!res.ok) {
-        return false;
-      }
-
-      return true;
+  
+      return res.ok;
     } catch (error) {
       console.error('Registration failed', error);
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  };  
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout, register }}>

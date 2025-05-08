@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, Copy, RefreshCw } from 'lucide-react';
+import { Check, ChevronLeft, Copy, RefreshCw } from 'lucide-react';
 import { 
   AlertDialog,
   AlertDialogAction, 
@@ -22,13 +22,13 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 
 export default function EditClientPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [regenerated, setRegenerated] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -92,8 +92,13 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
     }));
   };
   
-  const handleRegenerateApiKeyToggle = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, regenerateApiKey: checked }));
+  const handleRegenerateApiKeyClick = () => {
+    const newKey = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    setFormData(prev => ({ ...prev, apiKey: newKey, regenerateApiKey: true }));
+    setRegenerated(true);
+    setTimeout(() => setRegenerated(false), 1000);
   };
   
   const copyApiKey = () => {
@@ -142,7 +147,8 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
           planType: formData.planType,
           tokenLimit: formData.planType === 'limited' ? parseInt(formData.tokenLimit) : null,
           regenerateApiKey: formData.regenerateApiKey,
-        }),
+          apiKey: formData.apiKey,
+        }),        
       });
       
       if (!res.ok) {
@@ -164,6 +170,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
         title: 'Client Updated',
         description: 'The client has been successfully updated.',
       });
+      router.push('/dashboard/clients');
     } catch (error: any) {
       console.error('Error updating client:', error);
       toast({
@@ -259,21 +266,23 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                     <span className="sr-only">Copy API Key</span>
                   </Button>
                 </div>
-                
-                <div className="flex items-center space-x-2 mt-2">
-                  <Checkbox
-                    id="regenerateApiKey"
-                    checked={formData.regenerateApiKey}
-                    onCheckedChange={handleRegenerateApiKeyToggle}
-                  />
+
+                <div className="flex items-start space-x-2 mt-2 cursor-pointer" onClick={handleRegenerateApiKeyClick}>
                   <div className="grid gap-1.5 leading-none">
-                    <Label
-                      htmlFor="regenerateApiKey"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center"
-                    >
-                      <RefreshCw className="mr-1 h-3 w-3" />
-                      Regenerate API Key
-                    </Label>
+                    {regenerated ? (
+                      <div className="text-sm font-medium flex items-center text-green-600">
+                        <Check className="mr-1 h-4 w-4" />
+                        Key regenerated!
+                      </div>
+                    ) : (
+                      <Label
+                        htmlFor="regenerateApiKey"
+                        className="text-sm font-medium leading-none flex items-center cursor-pointer"
+                      >
+                        <RefreshCw className="mr-1 h-3 w-3" />
+                        Regenerate API Key
+                      </Label>
+                    )}
                     <p className="text-sm text-muted-foreground">
                       Warning: This will invalidate the existing API key.
                     </p>
@@ -323,7 +332,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                   onValueChange={handleTranslationTypeChange}
                   className="grid grid-cols-1 md:grid-cols-3 gap-4"
                 >
-                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 space-y-0 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="basic" id="basic" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="basic" className="font-medium cursor-pointer">Basic</Label>
@@ -332,7 +341,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 space-y-0 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="advanced" id="advanced" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="advanced" className="font-medium cursor-pointer">Advanced</Label>
@@ -341,7 +350,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-accent">
+                  <div className="flex items-start space-x-3 space-y-0 rounded-none border p-4 cursor-pointer hover:bg-accent">
                     <RadioGroupItem value="expert" id="expert" className="mt-1" />
                     <div className="space-y-1">
                       <Label htmlFor="expert" className="font-medium cursor-pointer">Expert</Label>

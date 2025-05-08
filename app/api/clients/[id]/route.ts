@@ -55,7 +55,7 @@ export async function PUT(
       );
     }
     
-    const { name, email, domain, translationType, planType, tokenLimit, regenerateApiKey } = await request.json();
+    const { name, email, domain, translationType, planType, tokenLimit, regenerateApiKey, apiKey } = await request.json();
     
     // Validate required fields
     if (!name || !email || !domain || !translationType || !planType) {
@@ -128,9 +128,9 @@ export async function PUT(
     };
     
     // Regenerate API key if requested
-    if (regenerateApiKey) {
-      updateData.apiKey = crypto.randomBytes(32).toString('hex');
-    }
+    if (regenerateApiKey && apiKey) {
+      updateData.apiKey = apiKey;
+    }    
     
     // Update client
     const result = await db.collection('clients').updateOne(

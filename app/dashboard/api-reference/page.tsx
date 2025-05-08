@@ -114,7 +114,7 @@ print(result)`;
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium">Endpoint</h3>
-                  <p className="text-sm font-mono bg-muted p-2 rounded-md">{basicEndpoint}</p>
+                  <p className="text-sm font-mono bg-muted p-2 rounded-none">{basicEndpoint}</p>
                 </div>
                 
                 <div>
@@ -126,7 +126,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Request Body</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "text": "Text to translate",
   "baseLanguage": "en",
@@ -137,7 +137,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Response</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "translatedText": "Translated text",
   "tokens": 12,
@@ -198,7 +198,7 @@ print(result)`;
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium">Endpoint</h3>
-                  <p className="text-sm font-mono bg-muted p-2 rounded-md">{advancedEndpoint}</p>
+                  <p className="text-sm font-mono bg-muted p-2 rounded-none">{advancedEndpoint}</p>
                 </div>
                 
                 <div>
@@ -211,7 +211,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Request Body</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "text": "Text to translate",
   "baseLanguage": "en",
@@ -222,7 +222,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Response</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "translatedText": "Translated text",
   "tokens": 12,
@@ -284,7 +284,7 @@ print(result)`;
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium">Endpoint</h3>
-                  <p className="text-sm font-mono bg-muted p-2 rounded-md">{expertEndpoint}</p>
+                  <p className="text-sm font-mono bg-muted p-2 rounded-none">{expertEndpoint}</p>
                 </div>
                 
                 <div>
@@ -297,7 +297,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Request Body</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "text": "Text to translate",
   "baseLanguage": "en",
@@ -308,7 +308,7 @@ print(result)`;
                 
                 <div>
                   <h3 className="text-lg font-medium">Response</h3>
-                  <div className="text-sm font-mono bg-muted p-2 rounded-md">
+                  <div className="text-sm font-mono bg-muted p-2 rounded-none">
                     {`{
   "translatedText": "Translated text",
   "tokens": 12,
@@ -377,7 +377,7 @@ print(result)`;
             </TabsList>
             <TabsContent value="nodejs" className="mt-4">
               <div className="relative">
-                <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+                <pre className="bg-muted p-4 rounded-none overflow-x-auto text-sm">
                   <code>{nodeJsCode}</code>
                 </pre>
                 <Button
@@ -392,7 +392,7 @@ print(result)`;
             </TabsContent>
             <TabsContent value="python" className="mt-4">
               <div className="relative">
-                <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+                <pre className="bg-muted p-4 rounded-none overflow-x-auto text-sm">
                   <code>{pythonCode}</code>
                 </pre>
                 <Button
@@ -407,7 +407,7 @@ print(result)`;
             </TabsContent>
             <TabsContent value="curl" className="mt-4">
               <div className="relative">
-                <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+                <pre className="bg-muted p-4 rounded-none overflow-x-auto text-sm">
                   <code>{curlCode}</code>
                 </pre>
                 <Button
