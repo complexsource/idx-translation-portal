@@ -139,20 +139,24 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <h1 className="text-3xl font-bold">Clients</h1>
         <div className="flex items-center gap-3">
-          <Button
-            variant={viewType === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewType('grid')}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewType === 'list' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewType('list')}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+          {filteredClients.length > 0 && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant={viewType === 'grid' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewType('grid')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewType === 'list' ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setViewType('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           {user?.role === 'admin' && (
             <Button asChild>
               <Link href="/dashboard/clients/new">
@@ -164,6 +168,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
+      {filteredClients.length > 0 && (
       <div className="flex w-full max-w-sm items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -173,6 +178,7 @@ export default function ClientsPage() {
           className="w-full"
         />
       </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center h-96">

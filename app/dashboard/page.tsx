@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-  console.log(usageData);
+  // console.log(recentActivity);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -27,6 +27,7 @@ export default function DashboardPage() {
         const usageRes = await fetch('/api/usage', { cache: 'no-store' });
         if (usageRes.ok) {
           const usage = await usageRes.json();
+          console.log('Usage data:', usage);
           setUsageData(usage);
           if (usage.byDay) {
             const formattedDailyData = usage.byDay.map((day: any) => ({
@@ -92,30 +93,39 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {user?.role === 'client' ? 'Translation Type' : 'Total Clients'}
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{clients.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Active translation service accounts
-                </p>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {user?.role === 'client'
+                      ? usageData?.records
+                          ?.find((r: any) => r.clientId === user.clientId)
+                          ?.translationType?.charAt(0).toUpperCase() +
+                        usageData?.records
+                          ?.find((r: any) => r.clientId === user.clientId)
+                          ?.translationType?.slice(1)
+                      : clients.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.role === 'client' ? 'Active translation tier' : 'Active translation service accounts'}
+                  </p>
+                </CardContent>
+              </Card>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
-                <BarChart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
+              <BarChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
                 <div className="text-2xl font-bold">
                   {formatNumber(
                     user?.role === 'client'
-                      ? usageData?.records
-                          ?.filter((r: any) => r.clientId === user.clientId)
-                          .reduce((sum: number, r: any) => sum + r.tokens, 0) || 0
+                      ? usageData?.topClients?.find((c: any) => c._id === user.clientId)?.totalTokens || 0
                       : usageData?.summary?.totalTokens || 0
                   )}
                 </div>
@@ -130,8 +140,12 @@ export default function DashboardPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(usageData?.summary?.totalCost || 0)}
+              <div className="text-2xl font-bold">
+                  {formatCurrency(
+                    user?.role === 'client'
+                      ? usageData?.topClients?.find((c: any) => c._id === user.clientId)?.totalCost || 0
+                      : usageData?.summary?.totalCost || 0
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Revenue from translation services
@@ -145,7 +159,11 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatNumber(usageData?.summary?.totalRequests || 0)}
+                  {formatNumber(
+                    user?.role === 'client'
+                      ? usageData?.topClients?.find((c: any) => c._id === user.clientId)?.totalRequests || 0
+                      : usageData?.summary?.totalRequests || 0
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   API requests processed
@@ -155,133 +173,227 @@ export default function DashboardPage() {
           </div>
           
           <div className="grid gap-6 lg:grid-cols-2">
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Token Usage Over Time</CardTitle>
-              <CardDescription>
-                Daily token consumption across all clients
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={{
-                chart: {
-                  type: 'areaspline',
-                  backgroundColor: 'transparent',
-                  height: 280,
-                },
-                title: { text: '' },
-                xAxis: {
-                  categories: recentActivity.map((item: any) =>
-                    dayjs(item.date).format('MMM DD YYYY')
-                  ),
-                  tickmarkPlacement: 'on',
-                  title: { text: null },
-                  labels: {
-                    style: { color: '#aaa' }, // dark-friendly
-                  },
-                  lineColor: 'rgba(255,255,255,0.1)',
-                  gridLineColor: 'rgba(255,255,255,0.05)',
-                },
-                yAxis: {
-                  title: { text: null },
-                  labels: {
-                    style: { color: '#aaa' },
-                  },
-                  gridLineColor: 'rgba(255,255,255,0.05)',
-                },
-                tooltip: {
-                  shared: true,
-                  valueSuffix: ' tokens',
-                  backgroundColor: '#222',
-                  borderColor: '#555',
-                  style: { color: '#fff' },
-                },
-                plotOptions: {
-                  areaspline: {
-                    fillOpacity: 0.3,
-                    marker: {
-                      enabled: true,
-                      radius: 4,
-                      Symbol: 'circle'
-                    },
-                    lineWidth: 2,
-                    color: '#00c3ff', // bright blue for dark bg
-                  },
-                },
-                series: [{
-                  name: 'Tokens',
-                  data: recentActivity.map((item: any) => item.tokens),
-                  showInLegend: false,
-                }],
-                legend: { enabled: false },
-                credits: { enabled: false },
-              }}
-            />
-            </CardContent>
-          </Card>
-            
-          <Card className="col-span-2 lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Translation Types</CardTitle>
-              <CardDescription>
-                Usage breakdown by translation service type
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px]">
+          {user?.role !== 'client' ? (
+          <>
+            <Card className="col-span-2 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Token Usage Over Time</CardTitle>
+                <CardDescription>
+                  Daily token consumption across all clients
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
               <HighchartsReact
                 highcharts={Highcharts}
                 options={{
                   chart: {
-                    type: 'column',
+                    type: 'areaspline',
                     backgroundColor: 'transparent',
                     height: 280,
                   },
                   title: { text: '' },
                   xAxis: {
-                    categories: usageData.byTypes?.map((item: any) => item.label),
-                    title: { text: null }, // Removed axis title
-                    labels: { style: { color: '#666' } }
+                    categories: recentActivity.map((item: any) =>
+                      dayjs(item.date).format('MMM DD YYYY')
+                    ),
+                    tickmarkPlacement: 'on',
+                    title: { text: null },
+                    labels: {
+                      style: { color: '#aaa' }, // dark-friendly
+                    },
+                    lineColor: 'rgba(255,255,255,0.1)',
+                    gridLineColor: 'rgba(255,255,255,0.05)',
                   },
                   yAxis: {
-                    min: 0,
-                    title: { text: null }, // Removed axis title
-                    labels: { style: { color: '#666' } },
-                    gridLineColor: 'rgba(200,200,200,0.1)'
+                    title: { text: null },
+                    labels: {
+                      style: { color: '#aaa' },
+                    },
+                    gridLineColor: 'rgba(255,255,255,0.05)',
                   },
                   tooltip: {
-                    backgroundColor: 'white',
-                    borderColor: '#ccc',
-                    style: { color: '#000' },
-                    pointFormat: 'Tokens used: <b>{point.y}</b>'
+                    shared: true,
+                    valueSuffix: ' tokens',
+                    backgroundColor: '#222',
+                    borderColor: '#555',
+                    style: { color: '#fff' },
                   },
                   plotOptions: {
-                    column: {
-                      colorByPoint: true,
-                      borderWidth: 0,
-                    }
+                    areaspline: {
+                      fillOpacity: 0.3,
+                      marker: {
+                        enabled: true,
+                        radius: 4,
+                        Symbol: 'circle'
+                      },
+                      lineWidth: 2,
+                      color: '#00c3ff', // bright blue for dark bg
+                    },
                   },
-                  colors: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
                   series: [{
                     name: 'Tokens',
-                    data: usageData.byTypes?.map((item: any) => item.tokens),
+                    data: recentActivity.map((item: any) => item.tokens),
+                    showInLegend: false,
                   }],
-                  credits: { enabled: false },
                   legend: { enabled: false },
-                  accessibility: {
-                    enabled: true,
-                    keyboardNavigation: {
-                      enabled: true,
-                      focusBorder: { style: { color: '#000', borderWidth: 2 } }
-                    },
-                    landmarkVerbosity: 'one',
-                    describeSingleSeries: true
-                  }
+                  credits: { enabled: false },
                 }}
               />
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+              
+            <Card className="col-span-2 lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Translation Types</CardTitle>
+                <CardDescription>
+                  Usage breakdown by translation service type
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <HighchartsReact
+                  highcharts={Highcharts}
+                  options={{
+                    chart: {
+                      type: 'column',
+                      backgroundColor: 'transparent',
+                      height: 280,
+                    },
+                    title: { text: '' },
+                    xAxis: {
+                      categories: usageData.byTypes?.map((item: any) => item.label),
+                      title: { text: null }, // Removed axis title
+                      labels: { style: { color: '#666' } }
+                    },
+                    yAxis: {
+                      min: 0,
+                      title: { text: null }, // Removed axis title
+                      labels: { style: { color: '#666' } },
+                      gridLineColor: 'rgba(200,200,200,0.1)'
+                    },
+                    tooltip: {
+                      backgroundColor: 'white',
+                      borderColor: '#ccc',
+                      style: { color: '#000' },
+                      pointFormat: 'Tokens used: <b>{point.y}</b>'
+                    },
+                    plotOptions: {
+                      column: {
+                        colorByPoint: true,
+                        borderWidth: 0,
+                      }
+                    },
+                    colors: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'],
+                    series: [{
+                      name: 'Tokens',
+                      data: usageData.byTypes?.map((item: any) => item.tokens),
+                    }],
+                    credits: { enabled: false },
+                    legend: { enabled: false },
+                    accessibility: {
+                      enabled: true,
+                      keyboardNavigation: {
+                        enabled: true,
+                        focusBorder: { style: { color: '#000', borderWidth: 2 } }
+                      },
+                      landmarkVerbosity: 'one',
+                      describeSingleSeries: true
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </>
+          ) : (
+            <>
+              <Card className="col-span-2 lg:col-span-1">
+                <CardHeader>
+                  <CardTitle>Usage by Language</CardTitle>
+                  <CardDescription>Your recent translation language combinations</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  <HighchartsReact
+                    highcharts={Highcharts}
+                    options={{
+                      chart: { type: 'column', backgroundColor: 'transparent', height: 280 },
+                      title: { text: '' },
+                      xAxis: {
+                        categories: usageData.records
+                          ?.filter((r: any) => r.clientId === user.clientId)
+                          ?.map((r: any) => `${r.baseLanguage} → ${r.targetLanguage}`),
+                        labels: { style: { color: '#666' } }
+                      },
+                      yAxis: {
+                        min: 0,
+                        title: { text: 'Tokens' },
+                        labels: { style: { color: '#666' } },
+                        gridLineColor: 'rgba(200,200,200,0.1)'
+                      },
+                      tooltip: {
+                        backgroundColor: 'white',
+                        borderColor: '#ccc',
+                        style: { color: '#000' },
+                        pointFormat: 'Tokens used: <b>{point.y}</b>'
+                      },
+                      plotOptions: {
+                        column: {
+                          colorByPoint: true,
+                          borderWidth: 0,
+                        }
+                      },
+                      series: [{
+                        name: 'Tokens',
+                        data: usageData.records
+                          ?.filter((r: any) => r.clientId === user.clientId)
+                          ?.map((r: any) => r.tokens),
+                      }],
+                      credits: { enabled: false },
+                      legend: { enabled: false },
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              {recentActivity?.length > 0 && (
+                <Card className="col-span-2 lg:col-span-1">
+                  <CardHeader>
+                    <CardTitle>Your Token Activity</CardTitle>
+                    <CardDescription>Daily token usage</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <HighchartsReact
+                      highcharts={Highcharts}
+                      options={{
+                        chart: { type: 'spline', backgroundColor: 'transparent', height: 280 },
+                        title: { text: '' },
+                        xAxis: {
+                          categories: recentActivity.map((item: any) => dayjs(item.date).format('MMM DD')),
+                          labels: { style: { color: '#aaa' } }
+                        },
+                        yAxis: {
+                          title: { text: null },
+                          labels: { style: { color: '#aaa' } },
+                          gridLineColor: 'rgba(255,255,255,0.05)'
+                        },
+                        tooltip: {
+                          shared: true,
+                          valueSuffix: ' tokens',
+                          backgroundColor: '#222',
+                          borderColor: '#555',
+                          style: { color: '#fff' },
+                        },
+                        series: [{
+                          name: 'Tokens',
+                          data: recentActivity.map((item: any) => item.tokens),
+                          showInLegend: false,
+                        }],
+                        credits: { enabled: false },
+                        legend: { enabled: false },
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
             
           <Card className="col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">

@@ -106,7 +106,34 @@ export async function GET(request: Request) {
         { $sort: { totalTokens: -1 } },
         { $limit: 10 }
       ]).toArray();
-    }
+    
+      // Add byDay for each top client
+      for (const client of topClients) {
+        const clientByDay = await db.collection('usageRecords').aggregate([
+          {
+            $match: {
+              ...baseFilter,
+              clientId: client._id
+            }
+          },
+          {
+            $group: {
+              _id: {
+                year: { $year: "$timestamp" },
+                month: { $month: "$timestamp" },
+                day: { $dayOfMonth: "$timestamp" }
+              },
+              tokens: { $sum: "$tokens" },
+              cost: { $sum: "$cost" },
+              count: { $sum: 1 }
+            }
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
+        ]).toArray();
+    
+        client.byDay = clientByDay;
+      }
+    }    
 
     return NextResponse.json({
       records: usageRecords,
