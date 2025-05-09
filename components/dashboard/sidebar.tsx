@@ -28,11 +28,15 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth(); // add isLoading
   const [open, setOpen] = useState(false);
-  
+
+  if (isLoading) return null; // or show a loader
+
   const isAdmin = user?.role === 'admin';
-  
+  const isClient = user?.role === 'client';
+  const isViewer = user?.role === 'viewer';
+
   const routes = [
     {
       label: 'Dashboard',
@@ -41,23 +45,25 @@ export function Sidebar({ className }: SidebarProps) {
       active: pathname === '/dashboard',
     },
     {
-      label: 'Clients',
+      label: isClient ? 'Client Info' : 'Clients',
       icon: Database,
       href: '/dashboard/clients',
       active: pathname === '/dashboard/clients' || pathname.startsWith('/dashboard/clients/'),
-    },
-    {
-      label: 'Usage',
-      icon: BarChart3,
-      href: '/dashboard/usage',
-      active: pathname === '/dashboard/usage' || pathname.startsWith('/dashboard/usage/'),
-    },
-    {
-      label: 'API Reference',
-      icon: CreditCard,
-      href: '/dashboard/api-reference',
-      active: pathname === '/dashboard/api-reference',
-    },
+    },    
+    ...(isClient ? [] : [
+      {
+        label: 'Usage',
+        icon: BarChart3,
+        href: '/dashboard/usage',
+        active: pathname === '/dashboard/usage' || pathname.startsWith('/dashboard/usage/'),
+      },
+      {
+        label: 'API Reference',
+        icon: CreditCard,
+        href: '/dashboard/api-reference',
+        active: pathname === '/dashboard/api-reference',
+      }
+    ]),
     ...(isAdmin ? [
       {
         label: 'Users',

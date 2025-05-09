@@ -168,7 +168,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {filteredClients.length > 0 && (
+      {filteredClients.length > 0 && (user?.role === 'admin' || 'viewer') && (
       <div className="flex w-full max-w-sm items-center space-x-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -190,7 +190,10 @@ export default function ClientsPage() {
       ) : (
         <div className={viewType === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
           {filteredClients.length > 0 ? (
-            filteredClients.map((client) => (
+            (user?.role === 'client'
+              ? filteredClients.filter((c) => c._id === user.clientId)
+              : filteredClients
+            ).map((client) => (
               <Card key={client._id} className={`flex flex-col justify-between h-full overflow-hidden ${isTokenLimitExceeded(client) ? 'border-red-500 dark:border-red-700' : ''}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
@@ -200,32 +203,36 @@ export default function ClientsPage() {
                     </div>
                     <Badge className={getTranslationTypeColor(client.translationType || client.idxAiType)}>
                       {(client.translationType
-                        ? client.idxAiType + ": " + client.translationType.charAt(0).toUpperCase() + client.translationType.slice(1)
+                        ? `${client.idxAiType}: ${client.translationType.charAt(0).toUpperCase()}${client.translationType.slice(1)}`
                         : client.idxAiType)}
                     </Badge>
                   </div>
                 </CardHeader>
+
                 <CardContent className="pb-2">
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <Mail className="h-4 w-4" />
-                      {client.email}
+                  {user?.role !== 'client' && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                        <Mail className="h-4 w-4" />
+                        {client.email}
+                      </div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">API Key</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copyApiKey(client.apiKey)}
+                          title="Copy API Key"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="bg-muted p-2 rounded-none overflow-hidden">
+                        <p className="text-xs font-mono truncate">{client.apiKey}</p>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">API Key</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => copyApiKey(client.apiKey)}
-                        title="Copy API Key"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="bg-muted p-2 rounded-none overflow-hidden">
-                      <p className="text-xs font-mono truncate">{client.apiKey}</p>
-                    </div>
-                  </div>
+                  )}
+
                   <div className="pt-2 space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Plan Type:</span>
@@ -271,6 +278,7 @@ export default function ClientsPage() {
                     </div>
                   )}
                 </CardContent>
+
                 <div className="mt-auto flex items-center justify-between p-4 pt-5 border-t">
                   <Button variant="outline" size="sm" className="text-xs" asChild>
                     <Link href={`/dashboard/usage?clientId=${client._id}`}>
@@ -278,40 +286,38 @@ export default function ClientsPage() {
                       View Usage
                     </Link>
                   </Button>
-                  <div className="flex items-center gap-2">
-                    {user?.role === 'admin' && (
-                      <>
-                        <Button variant="outline" size="icon" asChild className="h-8 w-8">
-                          <Link href={`/dashboard/clients/${client._id}`}>
-                            <Pencil className="h-3 w-3" />
-                            <span className="sr-only">Edit</span>
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive">
-                              <Trash2 className="h-3 w-3" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Client</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete <span className="font-semibold">{client.name}</span>? This action cannot be undone and will also delete all associated usage data.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteClient(client._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </>
-                    )}
-                  </div>
+                  {user?.role === 'admin' && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="icon" asChild className="h-8 w-8">
+                        <Link href={`/dashboard/clients/${client._id}`}>
+                          <Pencil className="h-3 w-3" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Client</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete <span className="font-semibold">{client.name}</span>? This action cannot be undone and will also delete all associated usage data.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteClient(client._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))

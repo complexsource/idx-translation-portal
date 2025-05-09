@@ -7,20 +7,31 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('clientId');
     const period = searchParams.get('period') || '30days';
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
     
     const db = await getDb();
 
-    let dateFilter: Date;
-    const now = new Date();
-    switch (period) {
-      case '7days': dateFilter = new Date(now.setDate(now.getDate() - 7)); break;
-      case '30days': dateFilter = new Date(now.setDate(now.getDate() - 30)); break;
-      case '90days': dateFilter = new Date(now.setDate(now.getDate() - 90)); break;
-      case 'year': dateFilter = new Date(now.setFullYear(now.getFullYear() - 1)); break;
-      default: dateFilter = new Date(now.setDate(now.getDate() - 30));
-    }
+    let baseFilter: any = {};
 
-    const baseFilter: any = { timestamp: { $gte: dateFilter } };
+    if (startDateParam && endDateParam) {
+      const startDate = new Date(startDateParam);
+      const endDate = new Date(endDateParam);
+      endDate.setHours(23, 59, 59, 999); // include full end day
+      baseFilter.timestamp = { $gte: startDate, $lte: endDate };
+    } else {
+      const now = new Date();
+      let dateFilter: Date;
+      switch (period) {
+        case '7days': dateFilter = new Date(now.setDate(now.getDate() - 7)); break;
+        case '30days': dateFilter = new Date(now.setDate(now.getDate() - 30)); break;
+        case '90days': dateFilter = new Date(now.setDate(now.getDate() - 90)); break;
+        case 'year': dateFilter = new Date(now.setFullYear(now.getFullYear() - 1)); break;
+        default: dateFilter = new Date(now.setDate(now.getDate() - 30));
+      }
+      baseFilter.timestamp = { $gte: dateFilter };
+    }
+    
     if (clientId) baseFilter.clientId = new ObjectId(clientId);
 
     const usageRecords = await db.collection('usageRecords')

@@ -10,6 +10,7 @@ import { useAuth } from '@/providers/auth-provider';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [usageData, setUsageData] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  dayjs.extend(customParseFormat);
 
   // console.log(recentActivity);
 
@@ -96,23 +98,26 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {user?.role === 'client' ? 'Translation Type' : 'Total Clients'}
+                  {user?.role === 'client' ? 'AI Service' : 'Total Clients'}
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {user?.role === 'client'
-                      ? usageData?.records
-                          ?.find((r: any) => r.clientId === user.clientId)
-                          ?.translationType?.charAt(0).toUpperCase() +
-                        usageData?.records
-                          ?.find((r: any) => r.clientId === user.clientId)
-                          ?.translationType?.slice(1)
-                      : clients.length}
+                  {user?.role === 'client' ? (() => {
+                    const clientData = usageData?.records?.find((r: any) => r.clientId === user.clientId);
+                    if (!clientData) return 'N/A';
+
+                    if (clientData.idxAiType === 'Translate AI') {
+                      const type = clientData.translationType;
+                      return `${clientData.idxAiType}: ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                    } else {
+                      return clientData.idxAiType;
+                    }
+                  })() : clients.length}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {user?.role === 'client' ? 'Active translation tier' : 'Active translation service accounts'}
+                    {user?.role === 'client' ? 'Active AI Service' : 'Active translation service accounts'}
                   </p>
                 </CardContent>
               </Card>
@@ -311,15 +316,21 @@ export default function DashboardPage() {
                   <CardDescription>Your recent translation language combinations</CardDescription>
                 </CardHeader>
                 <CardContent className="h-[300px]">
-                  <HighchartsReact
+                <HighchartsReact
                     highcharts={Highcharts}
                     options={{
                       chart: { type: 'column', backgroundColor: 'transparent', height: 280 },
                       title: { text: '' },
                       xAxis: {
-                        categories: usageData.records
-                          ?.filter((r: any) => r.clientId === user.clientId)
-                          ?.map((r: any) => `${r.baseLanguage} → ${r.targetLanguage}`),
+                        categories: Object.keys(
+                          usageData.records
+                            ?.filter((r: any) => r.clientId === user.clientId)
+                            ?.reduce((acc: any, cur: any) => {
+                              const key = `${cur.baseLanguage} → ${cur.targetLanguage}`;
+                              acc[key] = (acc[key] || 0) + cur.tokens;
+                              return acc;
+                            }, {}) || {}
+                        ),
                         labels: { style: { color: '#666' } }
                       },
                       yAxis: {
@@ -342,9 +353,15 @@ export default function DashboardPage() {
                       },
                       series: [{
                         name: 'Tokens',
-                        data: usageData.records
-                          ?.filter((r: any) => r.clientId === user.clientId)
-                          ?.map((r: any) => r.tokens),
+                        data: Object.values(
+                          usageData.records
+                            ?.filter((r: any) => r.clientId === user.clientId)
+                            ?.reduce((acc: any, cur: any) => {
+                              const key = `${cur.baseLanguage} → ${cur.targetLanguage}`;
+                              acc[key] = (acc[key] || 0) + cur.tokens;
+                              return acc;
+                            }, {}) || {}
+                        )
                       }],
                       credits: { enabled: false },
                       legend: { enabled: false },
@@ -365,7 +382,9 @@ export default function DashboardPage() {
                         chart: { type: 'spline', backgroundColor: 'transparent', height: 280 },
                         title: { text: '' },
                         xAxis: {
-                          categories: recentActivity.map((item: any) => dayjs(item.date).format('MMM DD')),
+                          categories: recentActivity.map((item: any) =>
+                            dayjs(item.date, 'D/M/YYYY').format('DD MMM YYYY')
+                          ),                          
                           labels: { style: { color: '#aaa' } }
                         },
                         yAxis: {
@@ -395,47 +414,103 @@ export default function DashboardPage() {
             </>
           )}
             
-          <Card className="col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Top Clients</CardTitle>
+            {user?.role !== 'client' ? (
+            <Card className="col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Top Clients</CardTitle>
+                  <CardDescription>Clients with highest token usage</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard/usage">View All</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {usageData?.topClients?.slice(0, 5).map((client: any) => (
+                    <div key={client._id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                          <Users className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{client.clientName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatNumber(client.totalTokens)} tokens
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">
+                        {formatCurrency(client.totalCost)}
+                      </div>
+                    </div>
+                  ))}
+                  {(!usageData?.topClients || usageData.topClients.length === 0) && (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-sm text-muted-foreground">No client data available</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="col-span-2">
+              <CardHeader>
+                <CardTitle>Recent Usage Records</CardTitle>
                 <CardDescription>
-                  Clients with highest token usage
+                  Latest {usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType === 'Prompt AI' 
+                    ? 'prompt requests' 
+                    : 'translation requests'}
                 </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/usage">View All</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {usageData?.topClients?.slice(0, 5).map((client: any, index: number) => (
-                  <div key={client._id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{client.clientName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatNumber(client.totalTokens)} tokens
-                        </p>
-                      </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-none border">
+                  {/* Header Row */}
+                  {usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType === 'Prompt AI' ? (
+                    <div className="grid grid-cols-[260px_1fr_100px_100px] p-4 font-medium border-b">
+                      <div>Date</div>
+                      <div>Prompt</div>
+                      <div>Tokens</div>
+                      <div>Cost</div>
                     </div>
-                    <div className="text-sm font-medium">
-                      {formatCurrency(client.totalCost)}
+                  ) : (
+                    <div className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 font-medium border-b">
+                      <div>Date</div>
+                      <div>Type</div>
+                      <div>Languages</div>
+                      <div>Tokens</div>
+                      <div>Cost</div>
                     </div>
+                  )}
+          
+                  {/* Data Rows */}
+                  <div className="divide-y">
+                    {usageData.records
+                      .filter((r: any) => r.clientId === user.clientId)
+                      .slice(0, 10)
+                      .map((record: any) =>
+                        record.idxAiType === 'Prompt AI' ? (
+                          <div key={record._id} className="grid grid-cols-[260px_1fr_100px_100px] p-4 text-sm">
+                            <div>{new Date(record.timestamp).toLocaleString()}</div>
+                            <div className="truncate">{record.prompt || '—'}</div>
+                            <div>{formatNumber(record.tokens)}</div>
+                            <div>{formatCurrency(record.cost)}</div>
+                          </div>
+                        ) : (
+                          <div key={record._id} className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 text-sm">
+                            <div>{new Date(record.timestamp).toLocaleString()}</div>
+                            <div className="capitalize">{record.translationType}</div>
+                            <div>{record.baseLanguage} → {record.targetLanguage}</div>
+                            <div>{formatNumber(record.tokens)}</div>
+                            <div>{formatCurrency(record.cost)}</div>
+                          </div>
+                        )
+                      )}
                   </div>
-                ))}
-                
-                {(!usageData?.topClients || usageData.topClients.length === 0) && (
-                  <div className="flex items-center justify-center py-8">
-                    <p className="text-sm text-muted-foreground">No client data available</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
         </>
       )}

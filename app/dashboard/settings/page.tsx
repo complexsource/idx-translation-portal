@@ -151,7 +151,7 @@ export default function SettingsPage() {
         <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="password">Password</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          {/* <TabsTrigger value="notifications">Notifications</TabsTrigger> */}
         </TabsList>
         
         <TabsContent value="profile">
