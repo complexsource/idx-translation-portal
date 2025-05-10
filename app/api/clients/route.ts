@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       tokenLimit,
       aiModel,
       idxAiType,
-      translationType
+      translationType,
+      idxdb, // NEW FIELD
     } = await request.json();
 
     // Required field checks
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!['Prompt AI', 'Translate AI'].includes(idxAiType)) {
+    if (!['Search AI', 'Prompt AI', 'Translate AI'].includes(idxAiType)) {
       return NextResponse.json(
         { error: 'Invalid IDX AI Type' },
         { status: 400 }
@@ -77,6 +78,16 @@ export async function POST(request: Request) {
       if (!translationType || !['basic', 'advanced', 'expert'].includes(translationType)) {
         return NextResponse.json(
           { error: 'Invalid or missing translation type for Translate AI' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (idxAiType === 'Search AI') {
+      const validDbTypes = ['MongoDB', 'MySQL', 'MSSQL', 'PostgreSQL'];
+      if (!idxdb || !validDbTypes.includes(idxdb)) {
+        return NextResponse.json(
+          { error: 'Invalid or missing database type for Search AI' },
           { status: 400 }
         );
       }
@@ -106,6 +117,7 @@ export async function POST(request: Request) {
       aiModel,
       idxAiType,
       translationType: idxAiType === 'Translate AI' ? translationType : null,
+      idxdb: idxAiType === 'Search AI' ? idxdb : null, // ADD THIS LINE
       apiKey,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -29,7 +29,7 @@ export default function DashboardPage() {
         const usageRes = await fetch('/api/usage', { cache: 'no-store' });
         if (usageRes.ok) {
           const usage = await usageRes.json();
-          console.log('Usage data:', usage);
+          //console.log('Usage data:', usage);
           setUsageData(usage);
           if (usage.byDay) {
             const formattedDailyData = usage.byDay.map((day: any) => ({
@@ -42,7 +42,7 @@ export default function DashboardPage() {
         }
 
         // Only fetch clients if admin
-        if (user?.role === 'admin') {
+        if (user?.role !== 'client') {
           const clientsRes = await fetch('/api/clients', { cache: 'no-store' });
           if (clientsRes.ok) {
             const clientsData = await clientsRes.json();
@@ -78,11 +78,11 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between mt-[50px] md:mt-[10px]">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        {user?.role === 'admin' && (
+        {/* {user?.role === 'admin' && (
           <Button asChild>
             <Link href="/dashboard/clients/new">Add New Client</Link>
           </Button>
-        )}
+        )} */}
       </div>
 
       {isLoading ? (
@@ -104,17 +104,23 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                  {user?.role === 'client' ? (() => {
-                    const clientData = usageData?.records?.find((r: any) => r.clientId === user.clientId);
-                    if (!clientData) return 'N/A';
-
-                    if (clientData.idxAiType === 'Translate AI') {
-                      const type = clientData.translationType;
-                      return `${clientData.idxAiType}: ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                    } else {
-                      return clientData.idxAiType;
-                    }
-                  })() : clients.length}
+                  {user?.role === 'client'
+                    ? (() => {
+                        const clientData = usageData?.records?.find((r: any) => r.clientId === user.clientId);
+                        console.log('clientData', clientData);
+                        if (!clientData) return 'N/A';
+                        if (clientData.idxAiType === 'Translate AI') {
+                          const type = clientData.translationType;
+                          return `${clientData.idxAiType}: ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+                        }
+                        if (clientData.idxAiType === 'Search AI') {
+                          console.log('clientData', clientData);
+                          const database = clientData.idxdb;
+                          return `${clientData.idxAiType}: ${database.charAt(0).toUpperCase() + database.slice(1)}`;
+                        }
+                        return clientData.idxAiType;
+                      })()
+                    : (clients?.length || 'N/A')}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {user?.role === 'client' ? 'Active AI Service' : 'Active translation service accounts'}
@@ -199,7 +205,7 @@ export default function DashboardPage() {
                   title: { text: '' },
                   xAxis: {
                     categories: recentActivity.map((item: any) =>
-                      dayjs(item.date).format('MMM DD YYYY')
+                      dayjs(item.date, 'D/M/YYYY').format('MMM DD YYYY')
                     ),
                     tickmarkPlacement: 'on',
                     title: { text: null },
@@ -384,7 +390,7 @@ export default function DashboardPage() {
                         xAxis: {
                           categories: recentActivity.map((item: any) =>
                             dayjs(item.date, 'D/M/YYYY').format('DD MMM YYYY')
-                          ),                          
+                          ),
                           labels: { style: { color: '#aaa' } }
                         },
                         yAxis: {
@@ -458,30 +464,48 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle>Recent Usage Records</CardTitle>
                 <CardDescription>
-                  Latest {usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType === 'Prompt AI' 
+                  Latest {usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType === 'Prompt AI' && 'Search AI' 
                     ? 'prompt requests' 
                     : 'translation requests'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-none border">
-                  {/* Header Row */}
-                  {usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType === 'Prompt AI' ? (
-                    <div className="grid grid-cols-[260px_1fr_100px_100px] p-4 font-medium border-b">
-                      <div>Date</div>
-                      <div>Prompt</div>
-                      <div>Tokens</div>
-                      <div>Cost</div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 font-medium border-b">
-                      <div>Date</div>
-                      <div>Type</div>
-                      <div>Languages</div>
-                      <div>Tokens</div>
-                      <div>Cost</div>
-                    </div>
-                  )}
+                  {(() => {
+                    const aiType = usageData.records.find((r: any) => r.clientId === user.clientId)?.idxAiType;
+                    console.log('aiType', aiType);
+
+                    if (aiType === 'Prompt AI') {
+                      return (
+                        <div className="grid grid-cols-[260px_1fr_100px_100px] p-4 font-medium border-b">
+                          <div>Date</div>
+                          <div>Prompt</div>
+                          <div>Tokens</div>
+                          <div>Cost</div>
+                        </div>
+                      );
+                    } else if (aiType === 'Search AI') {
+                      return (
+                        <div className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 font-medium border-b">
+                          <div>Date</div>
+                          <div>Database</div>
+                          <div>Query</div>
+                          <div>Tokens</div>
+                          <div>Cost</div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="grid grid-cols-[260px_160px_1fr_100px_100px] p-4 font-medium border-b">
+                          <div>Date</div>
+                          <div>Type</div>
+                          <div>Languages</div>
+                          <div>Tokens</div>
+                          <div>Cost</div>
+                        </div>
+                      );
+                    }
+                  })()}
           
                   {/* Data Rows */}
                   <div className="divide-y">
@@ -489,7 +513,7 @@ export default function DashboardPage() {
                       .filter((r: any) => r.clientId === user.clientId)
                       .slice(0, 10)
                       .map((record: any) =>
-                        record.idxAiType === 'Prompt AI' ? (
+                        record.idxAiType === 'Prompt AI' && 'Search AI' ? (
                           <div key={record._id} className="grid grid-cols-[260px_1fr_100px_100px] p-4 text-sm">
                             <div>{new Date(record.timestamp).toLocaleString()}</div>
                             <div className="truncate">{record.prompt || '—'}</div>

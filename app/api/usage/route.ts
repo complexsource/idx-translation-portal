@@ -46,6 +46,8 @@ export async function GET(request: Request) {
 
       if (record.idxAiType === 'Prompt AI') {
         label = 'Prompt AI';
+      } else if (record.idxAiType === 'Search AI') {
+        label = 'Search AI';
       } else if (record.idxAiType === 'Translate AI') {
         const type = record.translationType?.toLowerCase();
         if (['basic', 'advanced', 'expert'].includes(type)) {

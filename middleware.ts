@@ -6,7 +6,8 @@ const PUBLIC_PATHS = ['/', '/login'];
 const PUBLIC_API_PREFIXES = [
   '/api/auth',
   '/api/translate',
-  '/api/prompt',
+  '/api/ai/prompt',
+  '/api/search',
   '/api/dev/reset-admin'
 ];
 

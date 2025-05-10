@@ -26,116 +26,116 @@ export default function ApiReferencePage() {
 
   const promptExamples = {
   nodejs: `const fetch = require('node-fetch');
-  async function promptAI(prompt, apiKey) {
-      const response = await fetch('/api/prompt', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': apiKey
-          },
-          body: JSON.stringify({ prompt })
-      });
+async function promptAI(prompt, apiKey) {
+    const response = await fetch('/api/ai/prompt', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey
+        },
+        body: JSON.stringify({ prompt })
+    });
 
-      if (!response.ok) {
-          throw new Error('Prompt failed: ' + await response.text());
-      }
+    if (!response.ok) {
+        throw new Error('Prompt failed: ' + await response.text());
+    }
 
-      return await response.json();
-  }
+    return await response.json();
+}
 
-  // Example usage
-  const apiKey = 'your-api-key';
-  promptAI('Write a poem about the ocean', apiKey)
-      .then(result => console.log(result))
-      .catch(err => console.error(err));`,
+// Example usage
+const apiKey = 'your-api-key';
+promptAI('Write a poem about the ocean', apiKey)
+    .then(result => console.log(result))
+    .catch(err => console.error(err));`,
 
   python: `import requests
 
-  def prompt_ai(prompt, api_key):
-  url = "/api/prompt"
-  headers = {
-    "Content-Type": "application/json",
-    "x-api-key": api_key
-  }
-  data = { "prompt": prompt }
+def prompt_ai(prompt, api_key):
+url = "/api/ai/prompt"
+headers = {
+  "Content-Type": "application/json",
+  "x-api-key": api_key
+}
+data = { "prompt": prompt }
 
-  response = requests.post(url, headers=headers, json=data)
-  if response.status_code != 200:
-    raise Exception("Prompt failed: " + response.text)
-  return response.json()
+response = requests.post(url, headers=headers, json=data)
+if response.status_code != 200:
+  raise Exception("Prompt failed: " + response.text)
+return response.json()
 
-  # Example usage
-  api_key = "your-api-key"
-  result = prompt_ai("Write a poem about the ocean", api_key)
-  print(result)`,
+# Example usage
+api_key = "your-api-key"
+result = prompt_ai("Write a poem about the ocean", api_key)
+print(result)`,
 
   csharp: `using System;
-  using System.Net.Http;
-  using System.Text;
-  using System.Threading.Tasks;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 
-  class Program {
-      static async Task Main() {
-          var client = new HttpClient();
-          var request = new HttpRequestMessage(HttpMethod.Post, "/api/prompt");
-          request.Headers.Add("x-api-key", "your-api-key");
+class Program {
+    static async Task Main() {
+        var client = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/ai/prompt");
+        request.Headers.Add("x-api-key", "your-api-key");
 
-          var json = "{ \\"prompt\\": \\"Write a poem about the ocean\\" }";
-          request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        var json = "{ \\"prompt\\": \\"Write a poem about the ocean\\" }";
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-          var response = await client.SendAsync(request);
-          var result = await response.Content.ReadAsStringAsync();
-          Console.WriteLine(result);
-      }
-  }`,
+        var response = await client.SendAsync(request);
+        var result = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(result);
+    }
+}`,
 
-  javascript: `fetch('/api/prompt', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': 'your-api-key'
-      },
-      body: JSON.stringify({
-          prompt: 'Write a poem about the ocean'
-      })
-  })
-      .then(res => res.json())
-      .then(data => console.log(data))
-      .catch(err => console.error(err));`,
+  javascript: `fetch('/api/ai/prompt', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'your-api-key'
+    },
+    body: JSON.stringify({
+        prompt: 'Write a poem about the ocean'
+    })
+})
+    .then(res => res.json())
+    .then(data => console.log(data))
+    .catch(err => console.error(err));`,
 
   curl: `curl -X POST \\
-  /api/prompt \\
-  -H "Content-Type: application/json" \\
-  -H "x-api-key: your-api-key" \\
-  -d '{
-  "prompt": "Write a poem about the ocean"
-  }'`,
+/api/ai/prompt \\
+-H "Content-Type: application/json" \\
+-H "x-api-key: your-api-key" \\
+-d '{
+"prompt": "Write a poem about the ocean"
+}'`,
 
-  postman: `POST /api/prompt
-  Content-Type: application/json
-  x-api-key: your-api-key
+  postman: `POST /api/ai/prompt
+Content-Type: application/json
+x-api-key: your-api-key
 
-  {
+{
   "prompt": "Write a poem about the ocean"
-  }`
+}`
   };
 
   const baseCode = `async function translate(text, baseLanguage, targetLanguage, apiKey) {
-  const response = await fetch('${selectedEndpoint}', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey
-    },
-    body: JSON.stringify({ text, baseLanguage, targetLanguage })
-  });
+const response = await fetch('${selectedEndpoint}', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey
+  },
+  body: JSON.stringify({ text, baseLanguage, targetLanguage })
+});
 
-  if (!response.ok) {
-    throw new Error('Translation failed: ' + (await response.text()));
-  }
+if (!response.ok) {
+  throw new Error('Translation failed: ' + (await response.text()));
+}
 
-  return await response.json();
-  }`;
+return await response.json();
+}`;
 
   const nodeJsCode = `const fetch = require('node-fetch');
 
@@ -246,6 +246,7 @@ const codeExamples = activeTab === 'prompt' ? promptExamples : {
       
       <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          <TabsTrigger value="search">Search AI</TabsTrigger>
           <TabsTrigger value="prompt">Prompt AI</TabsTrigger>
           <TabsTrigger value="basic">Basic Translation</TabsTrigger>
           <TabsTrigger value="advanced">Advanced Translation</TabsTrigger>
@@ -264,7 +265,7 @@ const codeExamples = activeTab === 'prompt' ? promptExamples : {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium">Endpoint</h3>
-                  <p className="text-sm font-mono bg-muted p-2 rounded-none">/api/prompt</p>
+                  <p className="text-sm font-mono bg-muted p-2 rounded-none">/api/ai/prompt</p>
                 </div>
                 <div>
                   <h3 className="text-lg font-medium">Authentication</h3>

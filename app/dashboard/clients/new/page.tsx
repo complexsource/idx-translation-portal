@@ -25,6 +25,7 @@ export default function NewClientPage() {
     tokenLimit: '',
     aiModel: '',
     idxAiType: 'Translate AI',
+    idxdb: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +64,15 @@ export default function NewClientPage() {
           variant: 'destructive',
           title: 'Validation Error',
           description: 'Please specify a token limit for limited plan.',
+        });
+        return;
+      }
+
+      if (formData.idxAiType === 'Search AI' && !formData.idxdb) {
+        toast({
+          variant: 'destructive',
+          title: 'Validation Error',
+          description: 'Please select a database type for Search AI.',
         });
         return;
       }
@@ -200,11 +210,52 @@ export default function NewClientPage() {
                   <SelectValue placeholder="Select IDX AI Type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Search AI">Search AI</SelectItem>
                   <SelectItem value="Prompt AI">Prompt AI</SelectItem>
                   <SelectItem value="Translate AI">Translate AI</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.idxAiType === 'Search AI' && (
+              <div className="space-y-4">
+                <Label>Select Database Type</Label>
+                <RadioGroup
+                  value={formData.idxdb}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, idxdb: value }))}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="MongoDB" id="mongodb" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="mongodb" className="font-medium cursor-pointer">MongoDB</Label>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">NoSQL database ideal for scalable, document-based applications.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="MySQL" id="mysql" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="mysql" className="font-medium cursor-pointer">MySQL</Label>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Popular open-source relational database for structured data.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="MSSQL" id="mssql" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="mssql" className="font-medium cursor-pointer">MS SQL</Label>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Microsoft’s powerful relational database engine for enterprise apps.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 rounded-none border p-4 cursor-pointer hover:bg-accent">
+                    <RadioGroupItem value="PostgreSQL" id="postgresql" className="mt-1" />
+                    <div className="space-y-1">
+                      <Label htmlFor="postgresql" className="font-medium cursor-pointer">PostgreSQL</Label>
+                      <p className="text-sm text-muted-foreground ml-[-30px] mt-[15px]">Advanced open-source SQL database known for extensibility and compliance.</p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
 
             {/* AI Model Selection */}
             {formData.idxAiType != 'Translate AI' && (
