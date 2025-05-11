@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useLayoutEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
 import { useAuth } from '@/providers/auth-provider';
+import dynamic from "next/dynamic";
 
 export default function UsagePage() {
   const searchParams = useSearchParams();
@@ -25,13 +26,15 @@ export default function UsagePage() {
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [triggerDateFilter, setTriggerDateFilter] = useState(false);
+  const AmMap = dynamic(() => import("@/components/AmMap"), { ssr: false });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   //console.log(usageData);
   
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
 
   //console.log(usageData);  
   useEffect(() => {
-
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -77,6 +80,7 @@ export default function UsagePage() {
     };
     
     fetchData();
+
   }, [clientId, period, triggerDateFilter, toast]);
   
   const formatCurrency = (value: number) => {
@@ -109,6 +113,26 @@ export default function UsagePage() {
   ?.filter((client: any) =>
     client.clientName.toLowerCase().includes(search.toLowerCase())
   ).slice(0, 20);
+
+  const sortedRecords = useMemo(() => {
+    if (!usageData?.records) return [];
+    return [...usageData.records].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [usageData]);
+
+  const totalPages = Math.ceil(sortedRecords.length / itemsPerPage);
+
+  const paginatedRecords = sortedRecords.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
   
   return (
      <div className="space-y-6">
@@ -178,7 +202,7 @@ export default function UsagePage() {
           </div>
         </div>
         
-        {isLoading ? (
+        {isLoading && !usageData ? (
           <div className="flex items-center justify-center h-96">
             <div className="flex flex-col items-center gap-2">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -220,6 +244,7 @@ export default function UsagePage() {
                   </CardContent>
                 </Card>            
               )}
+
               {/* Total Tokens */}
               <Card>
                 <CardHeader className="pb-2">
@@ -273,7 +298,7 @@ export default function UsagePage() {
             </div>
             
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            <Card className="w-full">
+              <Card className={`${clientId && client?.idxAiType !== 'Translate AI' ? 'lg:col-span-2' : ''} w-full`}>
                 <CardHeader>
                   <CardTitle>Token Usage Over Time</CardTitle>
                   <CardDescription>Daily token consumption</CardDescription>
@@ -504,7 +529,29 @@ export default function UsagePage() {
                 </CardContent>
               </Card>
             )}
-          </div>
+            </div>
+
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              <Card className="lg:col-span-2 w-full">
+                <CardHeader>
+                  <CardTitle>Request Locations</CardTitle>
+                  <CardDescription>Geographical distribution of IP-based requests</CardDescription>
+                </CardHeader>
+                <CardContent className="!p-0">
+                  <AmMap
+                    points={
+                      usageData?.records
+                        ?.filter((r: any) => r.location?.lat && r.location?.lon)
+                        .map((r: any) => ({
+                          latitude: r.location.lat,
+                          longitude: r.location.lon,
+                          title: `${r.location.city}, ${r.location.country}`,
+                        })) || []
+                    }
+                  />
+                </CardContent>
+              </Card>
+            </div>
             
             {!clientId && (
               <Card>
@@ -637,7 +684,7 @@ export default function UsagePage() {
 
                     {/* Data Rows */}
                     <div className="divide-y">
-                      {usageData.records.slice(0, 10).map((record: any) => {
+                      {paginatedRecords.map((record: any) => {
                         if (client?.idxAiType === 'Prompt AI') {
                           return (
                             <div key={record._id} className="grid grid-cols-[260px_1fr_100px_100px] p-4 text-sm">
@@ -670,6 +717,57 @@ export default function UsagePage() {
                         }
                       })}
                     </div>
+                    {totalPages > 1 && (
+                      <div className="flex flex-wrap justify-center items-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => goToPage(1)}
+                          disabled={currentPage === 1}
+                        >
+                          First
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => goToPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          Prev
+                        </Button>
+
+                        {[...Array(totalPages)].map((_, index) => {
+                          const page = index + 1;
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => goToPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => goToPage(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => goToPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                        >
+                          Last
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

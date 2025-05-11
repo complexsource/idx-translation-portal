@@ -77,6 +77,47 @@ export async function POST(request: Request) {
       }
     );
 
+    let ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      request.headers.get('host') ||
+      'Unknown';
+
+    // Fallback for local dev or undefined IPs
+    if (
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip === 'localhost' ||
+      ip.startsWith('localhost') ||
+      ip === 'Unknown'
+    ) {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        if (data?.ip) ip = data.ip;
+      } catch (err) {
+        console.warn('Could not fetch public IP fallback:', err);
+      }
+    }
+
+    let geoLocation = {};
+    try {
+      const geoRes = await fetch(`http://ip-api.com/json/${ip}`);
+      const geo = await geoRes.json();
+      if (geo && geo.status === 'success') {
+        geoLocation = {
+          lat: geo.lat,
+          lon: geo.lon,
+          city: geo.city,
+          region: geo.regionName,
+          country: geo.country,
+          countryCode: geo.countryCode,
+        };
+      }
+    } catch (err) {
+      console.warn('Failed to fetch geo info:', err);
+    }
+
     // Add to usage records
     await db.collection('usageRecords').insertOne({
       clientId: client._id,
@@ -84,6 +125,8 @@ export async function POST(request: Request) {
       idxAiType: 'Translate AI',
       translationType: 'basic',
       tokens: tokenCount,
+      ip,
+      location: geoLocation,
       cost,
       baseLanguage,
       targetLanguage,
