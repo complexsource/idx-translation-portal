@@ -7,7 +7,8 @@ type MySQLConnection = {
   password: string;
   database: string;
   port?: number;
-  sslCaPath?: string; // optional
+  sslCaPath?: string;
+  useSsl?: boolean; // new flag
 };
 
 function createPool(connection: MySQLConnection) {
@@ -22,10 +23,16 @@ function createPool(connection: MySQLConnection) {
     queueLimit: 0,
   };
 
-  if (connection.sslCaPath) {
-    config.ssl = {
-      ca: fs.readFileSync(connection.sslCaPath, 'utf8'),
-    };
+  // Enable SSL if useSsl is true OR sslCaPath is provided
+  if (connection.useSsl || connection.sslCaPath) {
+    config.ssl = connection.sslCaPath
+      ? {
+          ca: fs.readFileSync(connection.sslCaPath, 'utf8'),
+          rejectUnauthorized: true,
+        }
+      : {
+          rejectUnauthorized: true,
+        };
   }
 
   return mysql.createPool(config);

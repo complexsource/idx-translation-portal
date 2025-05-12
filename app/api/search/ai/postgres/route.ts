@@ -112,8 +112,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid SQL response', raw: generatedQuery }, { status: 400 });
     }
 
-    console.log('🧠 Generated Query:', generatedQuery);
-    console.log('⏳ Executing query...');
+    console.log('Generated Query:', generatedQuery);
+    console.log('Executing query...');
 
     const result = await Promise.race([
       executePostgresQuery(connection, generatedQuery),

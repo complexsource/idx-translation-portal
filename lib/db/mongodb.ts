@@ -11,16 +11,20 @@ type MongoConnection = {
   user?: string;
   password?: string;
   database?: string;
-  caPath?: string; // Optional SSL CA file
+  pemPath?: string; // TLS client certificate (PEM)
+  caPath?: string;  // Optional CA file (PEM)
 };
 
 export async function getMongoDb(connection?: MongoConnection): Promise<Db> {
   if (cachedDb) return cachedDb;
 
   let uri: string;
-  let options: any = {};
+  const options: any = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  };
 
-  // Build URI
+  // Construct URI
   if (connection?.uri) {
     uri = connection.uri;
   } else if (connection?.host && connection?.user && connection?.password && connection?.database) {
@@ -29,14 +33,14 @@ export async function getMongoDb(connection?: MongoConnection): Promise<Db> {
     uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/test';
   }
 
-  // Optional SSL
+  // TLS/SSL Options
+  if (connection?.pemPath) {
+    options.tls = true;
+    options.tlsCertificateKeyFile = path.resolve(connection.pemPath);
+  }
+
   if (connection?.caPath) {
-    const ca = fs.readFileSync(path.resolve(connection.caPath));
-    options = {
-      ssl: true,
-      sslValidate: true,
-      sslCA: ca,
-    };
+    options.tlsCAFile = path.resolve(connection.caPath);
   }
 
   const client = new MongoClient(uri, options);
